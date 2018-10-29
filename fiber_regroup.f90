@@ -491,9 +491,8 @@ subroutine fiber_regroup_minmax_segments( t, fibers, hinges ) !2018/08/05 add
 type(fiber), allocatable, dimension(:) :: fibers
 type(rod)  , allocatable, dimension(:) :: hinges
 real(8), dimension(3)                  :: coord, min_coor, max_coor
-real(8)      :: t
+real(8)                                :: t
 integer(8)                             :: i, j, k, m
-integer      :: tt
 
 !2018/08/05  Compute center of mass for all fibers coord
 print *,"@@@"
@@ -511,12 +510,8 @@ end do
 end do        
 coord= coord/real(m)  !2018/08/05  coord= center of mass 
 
-tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
-
-print *,"time", tt
-!print *,"cen ", coord
-write(301,*),"time", tt
-!write(301,*),"cen ", coord
+print *,"cen ", coord
+write(301,*),"cen ", coord
 
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
@@ -532,12 +527,10 @@ end do
 end do  
 end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
-!print *,"max ", max_coor
-!print *,"min ", min_coor
-!print *,"@@@"
-!write(301,*),"max ", max_coor
-!write(301,*),"min ", min_coor
-!write(301,*),"@@@"
+print *,"min ", min_coor
+print *,"max ", max_coor
+write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
 
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
@@ -557,12 +550,10 @@ do i= 1, ubound (fibers,1)
 end do  
 end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
-
-print *,"max ", max_coor
 print *,"min ", min_coor
-print *,"@@@"
-write(301,*),"max ", max_coor
+print *,"max ", max_coor
 write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
 write(301,*),"@@@"
 !pause
 

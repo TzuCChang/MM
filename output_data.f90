@@ -154,7 +154,7 @@ write(301,*), AA
 
 write(303,*), tt, ubound (fibers,1)
 write(303,*), AA
-pause
+!pause
 
 end subroutine output_OrientationTensor
 
@@ -163,8 +163,8 @@ type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 integer(8)                               :: iii, jjj, kkk, nbr_hinges
 
-
-         kkk=1
+        open(304,file='OUTPUT/PositionsForTheMoment.txt')  !2018/09/02
+        kkk=1
         write (304,*), ubound(fibers,1)
         do iii=1, ubound(fibers,1)
   	        write (304,*), fibers(iii)%nbr_hinges
@@ -173,6 +173,7 @@ integer(8)                               :: iii, jjj, kkk, nbr_hinges
 		            kkk=kkk+1
   	        end do
         end do
+        close(304)                                         !2018/09/02
 
 end subroutine output_PositionsForTheMomemt
 

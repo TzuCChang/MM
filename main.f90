@@ -50,9 +50,9 @@ simParameters%IsPeriodicY =.false.
 
 open(300,file='OUTPUT/meanLength.txt')
 open(301,file='OUTPUT/OutputMessage.txt')
-open(302,file='OUTPUT/FiberLengthDistribution.txt')     !2018/08/12
-open(303,file='OUTPUT/OrientationTensor.txt')           !2018/08/12
-open(304,file='OUTPUT/PositionsForTheMoment.txt')       !2018/08/31
+open(302,file='OUTPUT/FiberLengthDistribution.txt')   !2018/08/12
+open(303,file='OUTPUT/OrientationTensor.txt')   !2018/08/12
+!open(304,file='OUTPUT/PositionsForTheMoment.txt')   !2018/09/02
 
 open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
@@ -131,7 +131,7 @@ nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 ­×¥
 call output_Length( t, fibers, hinges )                          !2018/08/12 ­×¥¿
 call output_LengthDistribution( t, fibers, indexA )              !2018/08/12 ¼W¥[
 call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 ¼W¥[
-!call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31  
+!call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/09/01 ¦]¬°­è¶}©l¦h¤@¼Ë,¤£¥Î¿é¥X
           
 do i=n,  nbr_intgr
  
@@ -187,11 +187,10 @@ do i=n,  nbr_intgr
                                   Nbr_bins,&
                                   distanceFactor )
          
-!         call fiber_regroup_minmax_hinges(   fibers, hinges )          !2018/08/05 add
-          call fiber_regroup_minmax_segments( t, fibers, hinges )       !2018/08/05 add
-          call output_OrientationTensor( t, fibers, hinges, AA )        
-          !2018/08/12 ¼W¥[
-!          call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31      
+!         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
+          call fiber_regroup_minmax_segments( t, fibers, hinges )     !2018/08/05 add
+          call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 ¼W¥[
+          !call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/09/01 ¦]¬°¨S¦³¥Î¨ìÂ_µõ
     end if
 
     nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 ¼W¥[
@@ -252,8 +251,8 @@ do i=n,  nbr_intgr
     if( .NOT. simParameters%IsPeriodicY ) then
         
          !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
-         call fiber_regroup_minmax_segments( t, fibers, hinges )    !2018/08/05 add
-         call output_OrientationTensor( t, fibers, hinges, AA )     !2018/08/12 ¼W¥[              
+         call fiber_regroup_minmax_segments( t, fibers, hinges )      !2018/08/05 add
+         call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 ¼W¥[              
          
          call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
                                           hinges,&
@@ -293,8 +292,8 @@ do i=n,  nbr_intgr
  		call output_data(   t, fibers, hinges, frame, printVelocities )
         call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 ¼W¥[
         call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 ¼W¥[ 
-        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31  
-                
+        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 ¸òwrit_period¤@°_¿é¥X,¥i¥H¦bFibers.inµ¹©w
+        
         if( isOutputMessage .eq. .false. ) then
             call output_Length( t, fibers, hinges )                        !2018/08/12 ­×¥¿
         end if
@@ -317,7 +316,7 @@ close(300)
 close(301)
 close(302)                     !2018/08/12
 close(303)                     !2018/08/12
-close(304)                     !2018/08/31
+!close(304)                    !2018/09/02
 
 close (3) 
 close (5)
