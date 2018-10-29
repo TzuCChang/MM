@@ -74,16 +74,16 @@ vec1= pt2-pt1
 
 l1= sqrt(abs(dot_product(vec1,vec1)))
 l2= sqrt(abs(dot_product(vec2,vec2)))
-beta= dot_product(vec1, vec2)/(l1*l2)  !2018/07/31  修正 
+beta= dot_product(vec1, vec2)/(l1*l2)  !2018/07/31  changed 
 
 k_bending= (2d0*E_Young* Inertia_Moment)/(l1+l2)
 
-if (beta.GE.1.0) then            !2018/07/31  修正 
+if (beta.GE.1.0) then            !2018/07/31  changed 
 	alpha= 0d0
-	else if (beta.le.-1.0) then  !2018/07/31  修正 
+	else if (beta.le.-1.0) then  !2018/07/31  changed 
 	alpha= pi                    !Changed 9/28/2014
 	else
-	alpha= acos( beta )          !2018/07/31  修正 
+	alpha= acos( beta )          !2018/07/31  changed
 end if
 
 !print *, "ALPHA ANGLE", alpha

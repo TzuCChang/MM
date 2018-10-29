@@ -8,7 +8,7 @@ implicit none
 contains
 
 
-subroutine GhostSegments_Location( fibers, hinges, ghost_segments, box_size, box_dimension ) !2018/09/12修正
+subroutine GhostSegments_Location( fibers, hinges, ghost_segments, box_size, box_dimension ) !2018/09/12 corrected
 
 implicit none
 type(fiber),   dimension(:), allocatable :: fibers
@@ -84,10 +84,10 @@ integer                                  :: ix, iz
 !$OMP DO PRIVATE (i, j, k)
 
     
-     do i= 1, ubound( ghost_segments, 1 )!從第一個segment做到最後一個segment
+     do i= 1, ubound( ghost_segments, 1 )       !from segment til last segment
 
-        j= ghost_segments(i)%orig_pos(1) !首
-        k= ghost_segments(i)%orig_pos(2) !尾
+        j= ghost_segments(i)%orig_pos(1)        !beginning
+        k= ghost_segments(i)%orig_pos(2)        !end
         
             ix= ghost_segments(i)%ix
             iz= ghost_segments(i)%iz
@@ -116,7 +116,7 @@ end subroutine GhostSegments_NewLocation
 
 !====================================================================
 
-subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )  !2018/09/12 修正
+subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )  !2018/09/12 corrected
 type(fiber),   dimension(:),  allocatable :: fibers
 type(rod),     dimension(:),  allocatable :: hinges
 type(segment), dimension(:), allocatable  :: ghost_segments
@@ -149,14 +149,14 @@ integer                     :: mm1, mm2, mm3
      box_dimension(2)= mm2
      box_dimension(3)= mm3
 
-     nbr_segments= 0          !2018/09/09  Count the number of segments
+     nbr_segments= 0                                                !2018/09/09  Count the number of segments
      do i=1, ubound(fibers,1)
-        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1 !2018/09/08 
+        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1       !2018/09/08 
      end do
      
-     numClones= (mm1+mm1+1)*(mm3+mm3+1)                       !2018/09/09
+     numClones= (mm1+mm1+1)*(mm3+mm3+1)                             !2018/09/09
      
-     nbr_GhostSegments= nbr_segments*numClones                !2018/09/09   
+     nbr_GhostSegments= nbr_segments*numClones                      !2018/09/09   
      
      if( allocated(ghost_segments) ) deallocate( ghost_segments )
      

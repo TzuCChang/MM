@@ -39,7 +39,7 @@ real(8),   dimension(3)     :: r
 end subroutine output_data
 
 
-subroutine output_Length( t, fibers, hinges )  !2018/08/11修正
+subroutine output_Length( t, fibers, hinges )               !2018/08/11 corrected
 type(fiber), dimension(:),  allocatable :: fibers
 type(rod),   dimension(:),  allocatable :: hinges
 real(8)                     :: FiberLength, SegmentLength, t
@@ -60,7 +60,7 @@ end do
 end do        
 coord= coord/real(mSegments)  !2018/08/11 
 
-tt= t*1.e6 + 0.5              !2018/08/11   化成整數,單位=micro seconds
+tt= t*1.e6 + 0.5              !2018/08/11   make it integer,unit=micro seconds
 mm= mSegments                 !2018/08/11   total segments number
 nn= ubound(fibers,1)          !2018/08/11   total Fiber number
 length= FiberLength           !2018/08/11   total Fiber length
@@ -75,7 +75,7 @@ lengthAvg= length/nn          !2018/08/11   mean  Fiber length
 end subroutine output_Length
 
 !======================================================================
-subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 新增
+subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 add
 
 type(fiber), dimension(:), allocatable :: fibers
 integer(8),  dimension(:), allocatable :: indexA
@@ -98,11 +98,11 @@ end if
 
 indexA= 0
 do i= 1, ubound (fibers,1)
-   j= fibers(i)%nbr_hinges-1  !2018/08/12  segment number of fiber(i)
+   j= fibers(i)%nbr_hinges-1        !2018/08/12  segment number of fiber(i)
    indexA(j)= indexA(j) + 1
 end do
 
-tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
+tt= t*1.0e6 + 0.5                   !2018/08/12  +0.5 is for the rounding
 maxSegments= ubound(indexA,1)
 
 !print *,"&&&", tt, ubound(fibers,1), maxSegments
@@ -116,7 +116,7 @@ end do
 end subroutine output_LengthDistribution
 
 !======================================================================
-subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 新增
+subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 add
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 real(8),     dimension(:,:)              :: AA
@@ -134,14 +134,14 @@ do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
    ra= ra/length
    do i=1,3
    do j=1,3
-      AA(i,j)= AA(i,j) + ra(i)*ra(j)*length   !2018/08/14  加入權重長度,因直徑一樣,長度代表體積
+      AA(i,j)= AA(i,j) + ra(i)*ra(j)*length     !2018/08/14  the length can represent the volume because the radius is the same
    end do
    end do
    mm= mm + 1 
 end do
 end do
 
-tt= t*1.0e6 + 0.5                    !2018/08/12  +0.5 的用意是4捨5入
+tt= t*1.0e6 + 0.5                               !2018/08/12  +0.5 is for the rounding
 trace_A= AA(1,1) + AA(2,2) + AA(3,3)
 
 AA= AA/trace_A
@@ -165,7 +165,7 @@ type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 integer(8)                               :: iii, jjj, kkk, nbr_hinges
 
-        open(304,file='OUTPUT/PositionsForTheMoment.txt')  !2018/09/02
+        open(304,file='OUTPUT/PositionsForTheMoment.txt')               !2018/09/02
         kkk=1
         write (304,*), ubound(fibers,1)
         do iii=1, ubound(fibers,1)

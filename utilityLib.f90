@@ -4,11 +4,11 @@ module m_UtilityLib  !2018/07/21 new
 use m_DataStructures
 
 implicit none
-public  :: QsortC                      !2018/08/02 從fiber_regroup 搬過來
-private :: Partition                   !2018/08/02 從fiber_regroup 搬過來
+public  :: QsortC                      !2018/08/02 move from fiber_regroup.f90
+private :: Partition                   !2018/08/02 move from fiber_regroup.f90
 contains
 
-recursive subroutine QsortC(A, Targ)   !2018/08/02 從fiber_regroup 搬過來
+recursive subroutine QsortC(A, Targ)   !2018/08/02 move from fiber_regroup.f90
 
 type (segment), intent(in out), dimension(:) :: Targ
 integer,        intent(in out), dimension(:) :: A  
@@ -23,7 +23,7 @@ integer                                      :: iq
 end subroutine QsortC
 
 !*===================================================================
-subroutine Partition(A, Targ, marker)  !2018/08/02 從fiber_regroup 搬過來
+subroutine Partition(A, Targ, marker)  !2018/08/02 move from fiber_regroup.f90
 
 type(segment), intent(in out), dimension(:) :: Targ
 type(segment)                               :: tempTarg  

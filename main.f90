@@ -31,7 +31,7 @@ logical                                   :: recover_simulation, isOutputMessage
 logical                                   :: is_fric_wall, printVelocities 
 
 integer(8), dimension(:,:), allocatable :: neighbor_list
-integer(8), dimension(:),   allocatable :: indexA                     !2018/08/12
+integer(8), dimension(:),   allocatable :: indexA                       !2018/08/12
 integer(8)                              :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period
 integer(8)                              :: i, j, k, n, frame, nbr_Fibers_OLD, nbr_Fibers_NEW, nbr_Fibers_INC
 integer(8)                              :: iii, jjj, kkk, nbr_hinges    !2018/08/31
@@ -122,22 +122,22 @@ else
 end if
 start = OMP_get_wtime()
 
-call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 修正字串
+call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 corrected
 
 i= 0 
-t= 0.d0                                                          !2018/07/14 增加
-nbr_Fibers_INC= 0                                                !2018/07/14 修正
-nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 修正
-nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 修正
+t= 0.d0                                                          !2018/07/14 add
+nbr_Fibers_INC= 0                                                !2018/07/14 corrected
+nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 corrected
+nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 corrected
 
-call output_Length( t, fibers, hinges )                          !2018/08/12 修正
-call output_LengthDistribution( t, fibers, indexA )              !2018/08/12 增加
-call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 增加
-!call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 因為剛開始多一樣,不用輸出
+call output_Length( t, fibers, hinges )                          !2018/08/12 corrected
+call output_LengthDistribution( t, fibers, indexA )              !2018/08/12 add
+call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 add
+
           
 do i=n,  nbr_intgr
  
-    t = dt*i                                                     !2018/07/14 修正
+    t = dt*i                                                     !2018/07/14 corrected
     
     nbr_Fibers_OLD= ubound(fibers,1)                             !2018/08/11
 
@@ -170,17 +170,17 @@ do i=n,  nbr_intgr
          
 !      call fiber_regroup_minmax_hinges(   fibers, hinges )             !2018/08/05 add
 !      call fiber_regroup_minmax_segments( fibers, hinges )             !2018/08/05 add
-!      call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 增加
-!      call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)  !2018/09/01 因為沒有用到斷裂
+!      call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 add
+
        
     end if
 
-    nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 增加
+    nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 add
 
-    if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD + nbr_Fibers_INC) ) then       !2018/08/12 增加
-         call output_Length( t, fibers, hinges )                            !2018/08/12 修正       
-!        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 增加
-         isOutputMessage= .true.                                            !2018/08/12 增加
+    if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD + nbr_Fibers_INC) ) then       !2018/08/12 add
+         call output_Length( t, fibers, hinges )                            !2018/08/12 corrected       
+!        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 add
+         isOutputMessage= .true.                                            !2018/08/12 add
     end if    
 	
 	!call cpu_time(start)
@@ -199,10 +199,10 @@ do i=n,  nbr_intgr
 	!end do
     !call cpu_time(start) 
 
-    call GhostSegments_NewLocation( hinges, ghost_segments, box_size ) !2018/09/08  Ghost Segments Location    
+    call GhostSegments_NewLocation( hinges, ghost_segments, box_size )                  !2018/09/08  Ghost Segments Location    
 
  	call excl_VolForceMomentsTotal( fibers, hinges, ghost_segments, neighbor_list,&
-                                    nbr_neighbors, r_fiber, fric_coeff, ex_vol_const )  !2018/09/08  修正
+                                    nbr_neighbors, r_fiber, fric_coeff, ex_vol_const )  !2018/09/08 corrected
                                     
     !call cpu_time(finish)
     !print *, "Interactions", finish-start
@@ -210,9 +210,9 @@ do i=n,  nbr_intgr
     
     if( .NOT. simParameters%IsPeriodicY ) then
         
-         !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
-!        call fiber_regroup_minmax_segments(fibers, hinges )    !2018/08/05 add
-!        call output_OrientationTensor( t, fibers, hinges, AA )     !2018/08/12 增加              
+         !call fiber_regroup_minmax_hinges( fibers, hinges )                            !2018/08/05 add
+!        call fiber_regroup_minmax_segments(fibers, hinges )                            !2018/08/05 add
+!        call output_OrientationTensor( t, fibers, hinges, AA )                         !2018/08/12 add             
          
          call excl_VolForceMomentsWalls2( fibers, hinges, box_size, is_fric_wall,&
                                           gamma_dot, r_fiber, fric_coeff, ex_vol_const) !2018/07/21 change name
@@ -244,14 +244,14 @@ do i=n,  nbr_intgr
  	if (MODULO(i,writ_period)==0 ) then
 
  		call output_data(   t, fibers, hinges, frame, printVelocities )
-        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 增加
-        call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 增加 
-        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 跟writ_period一起輸出,可以在Fibers.in給定
+        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 add
+        call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 add 
+        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 add
         
-        call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add        
+        call fiber_regroup_minmax_segments( fibers, hinges )               !2018/08/05 add        
         
         if( isOutputMessage .eq. .false. ) then
-            call output_Length( t, fibers, hinges )                        !2018/08/12 修正
+            call output_Length( t, fibers, hinges )                        !2018/08/12 add
         end if
         
  		frame=frame+1

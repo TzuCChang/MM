@@ -6,7 +6,7 @@ module m_Motion
     implicit none
     contains
     
-!*****************************************************************************************
+!====================================================================
 subroutine motion_fiber(fibers, hinges, r_bead)
     type(fiber) , dimension(:):: fibers
     type(rod), dimension(:)   :: hinges
@@ -36,7 +36,8 @@ subroutine motion_fiber(fibers, hinges, r_bead)
 
 end subroutine motion_fiber
 
-!*****************************************************************************************
+
+!====================================================================
 subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
     ! Copy a range of a regular matrix to a banded matrix
     real(8), dimension(:,:), allocatable :: AB
@@ -48,7 +49,7 @@ subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
         ii =1
         do i= i1 , i2
             if( i >= max(1,j-KU) .and. i <= min(nbRows,j+KL)) then
-                AB(KL+KU+1+i-j,j) = A(ii,jj) !for max(1,j-KU)<=i<=min(N,j+KL)
+                AB(KL+KU+1+i-j,j) = A(ii,jj)                            !for max(1,j-KU)<=i<=min(N,j+KL)
             end if
             ii = ii+1
         end do
@@ -57,7 +58,7 @@ subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
 
 end subroutine copyToBanded
 
-!*****************************************************************************************
+!====================================================================
 subroutine motion_matrix(fiber_hinges, r_bead)
     implicit none
     type (rod), dimension(:)             :: fiber_hinges
@@ -73,15 +74,15 @@ subroutine motion_matrix(fiber_hinges, r_bead)
     drag_coeff_omega= 8d0*pi*r_bead**3d0
     minSegs =4
 
-    n=9*(ubound(fiber_hinges,1)-1)   !9 eqs per every rod
+    n=9*(ubound(fiber_hinges,1)-1)                      !9 eqs per every rod
     if ((ubound(fiber_hinges,1)-1) .LT. minSegs) then
         !print *, " Regular Solver "
         allocate(Amat(n,n))
         Amat = 0
     else
         !print *, " Banded Solver "
-        KL = 11 !矩陣中間寬帶 往上有11個不是0
-        KU = 9  !矩陣中間寬帶 往下有9個不是0
+        KL = 11                                         
+        KU = 9                                          
         allocate(AB(2*KL+KU+1,n))
         AB = 0
     end if
@@ -93,12 +94,12 @@ subroutine motion_matrix(fiber_hinges, r_bead)
     allocate(bvec(n,1))   
     bvec=0
 
-        do i=1, ubound (fiber_hinges,1)-1                      !2018/09/05  修正
-           fiber_hinges(i)%v_i_OLD= fiber_hinges(i)%v_i        !2018/09/05  修正
+        do i=1, ubound (fiber_hinges,1)-1                      !2018/09/05  corrected
+           fiber_hinges(i)%v_i_OLD= fiber_hinges(i)%v_i        !2018/09/05  corrected
         end do
         
-        do i=1, ubound (fiber_hinges,1)-2                      !2018/09/05  修正
-           fiber_hinges(i)%omega_OLD= fiber_hinges(i)%omega    !2018/09/05  修正
+        do i=1, ubound (fiber_hinges,1)-2                      !2018/09/05  corrected
+           fiber_hinges(i)%omega_OLD= fiber_hinges(i)%omega    !2018/09/05  corrected
         end do    
 
     !print *, "DIMENSION OF FIBER HINGES", ubound (fiber_hinges,1)
@@ -277,12 +278,12 @@ subroutine motion_matrix(fiber_hinges, r_bead)
         end do
     end if
 
-        do i=1, ubound (fiber_hinges,1)-1                      !2018/09/05  修正
-           fiber_hinges(i)%v_i= fiber_hinges(i)%v_i_old + 0.5*(fiber_hinges(i)%v_i - fiber_hinges(i)%v_i_old)    !2018/09/05  修正
+        do i=1, ubound (fiber_hinges,1)-1                                                                               !2018/09/05  corrected
+           fiber_hinges(i)%v_i= fiber_hinges(i)%v_i_old + 0.5*(fiber_hinges(i)%v_i - fiber_hinges(i)%v_i_old)           !2018/09/05  corrected
         end do
         
-        do i=1, ubound (fiber_hinges,1)-2                      !2018/09/05  修正
-           fiber_hinges(i)%omega= fiber_hinges(i)%omega_old + 0.5*(fiber_hinges(i)%omega - fiber_hinges(i)%omega_old)    !2018/09/05  修正
+        do i=1, ubound (fiber_hinges,1)-2                                                                               !2018/09/05  corrected
+           fiber_hinges(i)%omega= fiber_hinges(i)%omega_old + 0.5*(fiber_hinges(i)%omega - fiber_hinges(i)%omega_old)   !2018/09/05  corrected
         end do        
     
     
@@ -303,7 +304,7 @@ subroutine motion_matrix(fiber_hinges, r_bead)
 
 end subroutine motion_matrix
 
-!*******************************************************************
+!====================================================================
 subroutine mini_mat(mat, vec, conn, conn2, drag_coeff_vel, drag_coeff_omega)
     implicit none
     real(8), dimension(9,15) :: mat
@@ -363,7 +364,7 @@ subroutine mini_mat(mat, vec, conn, conn2, drag_coeff_vel, drag_coeff_omega)
     mat(7, 7)= -drag_coeff_omega*conn%ave_viscosity*   conn%nbr_beads&
         -drag_coeff_vel*conn%ave_viscosity  *  (conn%r_prod_sum(3,3)+conn%r_prod_sum(2,2))
     mat(7, 8)=  drag_coeff_vel*conn%ave_viscosity  *   conn%r_prod_sum(1,2)
-    mat(7, 9)= +drag_coeff_vel*conn%ave_viscosity  *   conn%r_prod_sum(1,3)!CORR
+    mat(7, 9)= +drag_coeff_vel*conn%ave_viscosity  *   conn%r_prod_sum(1,3)                 !CORR
     mat(7,11)= +conn%r(3)
     mat(7,12)= -conn%r(2)
     !------------
@@ -407,7 +408,8 @@ subroutine mini_mat(mat, vec, conn, conn2, drag_coeff_vel, drag_coeff_omega)
 
 end subroutine mini_mat
 
-!*******************************************************************
+
+!====================================================================
 subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     implicit none
     real(8), dimension(9,15) :: mat

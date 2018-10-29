@@ -7,7 +7,7 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine set_velocity( X,&    !2018/07/21 change name
+subroutine set_velocity( X,&                !2018/07/21 change name
                          vel,&
                          omega,&
                          gamma_dot,&
@@ -41,12 +41,12 @@ else
     vel(3)=epsilon_dot*X(3)
 end if
 		
-end subroutine set_velocity   !2018/07/21 change name
+end subroutine set_velocity                 !2018/07/21 change name
 
 
 
-!2018/07/14 新增加訪問學者
-subroutine set_velocity_NEW( X,&   !2018/07/21 change name
+!2018/07/14 add flow case (from Hakan)
+subroutine set_velocity_NEW( X,&            !2018/07/21 change name
                              vel,&
                              omega,&
                              gamma_dot,&
