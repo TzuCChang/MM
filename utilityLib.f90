@@ -4,7 +4,73 @@ module m_UtilityLib  !2018/07/21 new
 use m_DataStructures
 
 implicit none
+public  :: QsortC                      !2018/08/02 從fiber_regroup 搬過來
+private :: Partition                   !2018/08/02 從fiber_regroup 搬過來
 contains
+
+recursive subroutine QsortC(A, Targ)   !2018/08/02 從fiber_regroup 搬過來
+
+type (segment), intent(in out), dimension(:) :: Targ
+integer,        intent(in out), dimension(:) :: A  
+integer                                      :: iq
+
+  if(size(A) > 1) then
+     call Partition(A, Targ, iq)
+     call QsortC(A(:iq-1), Targ(:iq-1))
+     call QsortC(A(iq:), Targ(iq:))
+  endif
+  
+end subroutine QsortC
+
+!*===================================================================
+subroutine Partition(A, Targ, marker)  !2018/08/02 從fiber_regroup 搬過來
+
+type(segment), intent(in out), dimension(:) :: Targ
+type(segment)                               :: tempTarg  
+integer,       intent(in out), dimension(:) :: A  
+integer,       intent(out)                  :: marker
+integer                                     :: i, j
+real                                        :: temp
+real                                        :: x      ! pivot point
+  
+  x = A(1)
+  
+  i= 0
+  j= size(A) + 1
+
+  do
+     j = j-1
+     do
+        if( A(j) <= x ) exit
+        j = j-1
+     end do
+     i = i+1
+     do
+        if( A(i) >= x ) exit
+        i = i+1
+     end do
+     if (i < j) then
+        ! exchange A(i) and A(j)
+        
+        temp=     A(i)
+        tempTarg= Targ(i)
+        
+        A(i)=    A(j)
+        Targ(i)= Targ(j)
+        
+        A(j)=    temp
+        Targ(j)= tempTarg
+        
+     elseif ( i == j ) then
+        marker= i+1
+        return
+     else
+        marker= i
+        return
+     endif
+  end do
+
+end subroutine Partition
 
 FUNCTION outerProd(a, b)
   real(8), DIMENSION(3,3)           :: outerProd
