@@ -67,7 +67,7 @@ real(8), dimension(3)                 :: box_size, coord
 logical                               :: periodic_boundary
 
 
-do i=1, ubound (fibers,1)   !2018/09/22  add 紀錄
+do i=1, ubound (fibers,1)   !2018/09/22  add
 	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
 		coord= hinges(j+1)%X_i-hinges(j)%X_i
 		hinges(j)%length2= sqrt( dot_product(coord, coord) )
@@ -77,11 +77,11 @@ end do
 
 do i=1, ubound(hinges,1)
 	if( hinges(i)%is_stationary==0 ) then
-		hinges(i)%X_i= hinges(i)%X_i + hinges(i)%v_i*dt  !2018/09/22 修正 移動
+		hinges(i)%X_i= hinges(i)%X_i + hinges(i)%v_i*dt  !2018/09/22 修正
 	end if
 end do
 
-do i=1, ubound (fibers,1)  !2018/09/22  add 修正 保持方向不變 維持原本長度
+do i=1, ubound (fibers,1)  !2018/09/22  add
 	do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
        jp1= j+1
        coord= hinges(jp1)%X_i - hinges(j)%X_i

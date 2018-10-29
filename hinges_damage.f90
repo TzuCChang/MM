@@ -48,7 +48,7 @@ do i=1, ubound(fibers,1)
 	hinges(fibers(i)%first_hinge)%is_separated=.true.
 end do
 
-call hinges_SortOrder_curv( hinges )
+!call hinges_SortOrder_curv( hinges )   !2018/10/05  關掉, 量大, 時間花太長
 
 !PRINT *, "Monitor Hinges"
 !do i=1, ubound(hinges,1)

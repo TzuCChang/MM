@@ -28,23 +28,30 @@ subroutine read_data(frame,&
                      hinges,&
                      printVelocities,&
                      distanceFactor,&
-                     simParameters)
+                     simParameters,&               !2018/10/05 add by Hakan
+                     NumberOfDynamicParameters,&   !2018/10/05 add by Hakan
+                     Duration_i,&                  !2018/10/05 add by Hakan
+                     Shearrate_i,&                 !2018/10/05 add by Hakan
+                     Viscosity_i)                  !2018/10/05 add by Hakan
 
-real(8)                                :: E_Young, min_curv, r_fiber, viscosity, ex_vol_const,&
-                                          gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor
-integer(8)                             :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period,&
-                                          i, j, k, m, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
-logical, intent(out)                   :: periodic_boundary
-real(8), dimension(3)                  :: box_size,boxSize,boxOrigin
 type(rod)  , allocatable, dimension(:) :: hinges
 type(fiber), allocatable, dimension(:) :: fibers
-logical                                :: recover_simulation,allow_breakage
-integer(8)                             :: frame
-real(8), dimension(3)                  :: coord, min_coor, max_coor
-logical                                :: is_fric_wall,printVelocities,isPeriodicX,isPeriodicY,isPeriodicZ
 type(simulationParameters)             :: simParameters
+logical, intent(out)                   :: periodic_boundary
+logical                                :: recover_simulation,allow_breakage
+logical                                :: is_fric_wall,printVelocities,isPeriodicX,isPeriodicY,isPeriodicZ
 
-real(8)                                ::  FiberLength, FiberVolume, BoxVolume, VolumeFraction
+integer(8)                             :: frame, NumberOfDynamicParameters     !2018/10/05
+integer(8)                             :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period,&
+                                          i, j, k, m, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
+
+real(8), dimension(:),   allocatable   :: Duration_i, Shearrate_i, Viscosity_i !2018/10/05   by HAKAN for dynamic paramaters
+real(8), dimension(3)                  :: box_size,boxSize,boxOrigin
+real(8), dimension(3)                  :: coord, min_coor, max_coor
+real(8)                                :: FiberLength, FiberVolume, BoxVolume, VolumeFraction
+real(8)                                :: E_Young, min_curv, r_fiber, viscosity, ex_vol_const,&
+                                          gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor
+
 
 namelist /input/ recover_simulation,&
                  fric_coeff,&
@@ -134,7 +141,8 @@ namelist /input/ recover_simulation,&
     write(301,*),"distance Factor ", distanceFactor
 	write(301,*),"------------------------------------------"
     
- simParameters%IsPeriodicY = isPeriodicY
+ !simParameters%IsPeriodicY = isPeriodicY
+ 
     open(3, file='OUTPUT/positions.out')
 	if (recover_simulation.eqv..true.) then
 		open(4,file='OUTPUT/nbr_frames.txt')
@@ -264,6 +272,42 @@ end do
     print *, "periodic_boundary    ", periodic_boundary
     write(301,*),"periodic_boundary    ", periodic_boundary
 !pause    
+
+
+    !2018/10/05 START Hakan - SHEARRATE and VISCOSITY OVER T
+    !2018/10/05  Read Shearrate over Time
+    if( flow_case==1848 ) then
+
+        open(1848,file='INPUT/DynamicParameters.in')
+        read (1848,*), NumberOfDynamicParameters
+
+	    allocate( Duration_i(  NumberOfDynamicParameters ) )  !2018/10/05 add
+	    allocate( Shearrate_i( NumberOfDynamicParameters ) )  !2018/10/05 add
+	    allocate( Viscosity_i( NumberOfDynamicParameters ) )  !2018/10/05 add
+
+        print *, "@@@("
+        print *, "flow_case= ", flow_case
+        print *, "Added by Hakan Read Input for Shearrate over Time"        
+        print *, " Number of shearrates over time ", NumberOfDynamicParameters
+        
+        write(301,*), "@@@("
+        write(301,*), "flow_case= ", flow_case
+        write(301,*), "Added by Hakan Read Input for Shearrate over Time"        
+        write(301,*), " Number of shearrates over time ", NumberOfDynamicParameters
+        
+	    do i=1, NumberOfDynamicParameters
+		    read (1848,*), Duration_i(i), Shearrate_i(i), Viscosity_i(i)
+            
+            print *, int(i), real(Duration_i(i)), real(Shearrate_i(i)), real(Viscosity_i(i))
+            write(301,*), int(i), real(Duration_i(i)), real(Shearrate_i(i)), real(Viscosity_i(i))            
+        end do
+
+        close(1848)
+        !pause
+
+    end if
+    !2018/10/05 END Hakan - SHEARRATE and VISCOSITY OVER T
+
 
 end subroutine read_data
 
