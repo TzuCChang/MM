@@ -225,19 +225,12 @@ end subroutine dist_segs
                      
 !====================================================================                    
 
-subroutine dist_segments( p1,&
-                          q1,&
-                          p2,&
-                          q2,&
-                          s,&
-                          t,&
-                          Gab,&
-                          Gab_norm )
+subroutine dist_segments( p1, q1, p2, q2, s, t, Gab, Gab_norm )
 
-real(8), dimension(3):: p1, q1, p2, q2, d1, d2, Gab, r, c1, c2
-real(8)              :: Gab_norm, epsilon, s, t
-real(8)              :: a, e, f, c, b, denom
-logical              :: coll_course
+real(8), dimension(3) :: p1, q1, p2, q2, d1, d2, Gab, r, c1, c2
+real(8)               :: Gab_norm, epsilon, s, t
+real(8)               :: a, e, f, c, b, denom
+logical               :: coll_course
 
 epsilon= 1D-40
 
@@ -291,8 +284,8 @@ else
     
 end if
 
-    c1 = p1 + d1*s
-    c2 = p2 + d2*t
+    c1= p1 + d1*s
+    c2= p2 + d2*t
     
    !print *, "c1 " , c1
    !print *, "c2 " , c2
@@ -304,8 +297,9 @@ end if
    !print *, "d2 " , d2 
    !print *, " "
    
-    Gab_norm = sqrt(dot_product(c1-c2, c1-c2))
     Gab=  (c1 - c2)
+
+    Gab_norm = sqrt( dot_product(Gab,Gab) )
 
 end subroutine dist_segments
        

@@ -88,21 +88,29 @@ do i=1, ubound(hinges,1)
         !hinges_temp(k) = hinges(i)
         ! updating position to ensure not overlapping
         
+hinges_temp(k)= hinges(i) !2018/08/04 修正錯誤 因為hinges_temp(k) 是由 hinges(i) 分離或斷裂來的(k),因此要繼承(i)的所有資訊,但是位置要移動一些       
+                          !2018/08/04 修正錯誤 原先程式漏了這一行,因此hinges_temp(k) 只繼承了座標 X_i 和is_stationary
+! i斷裂變成k, k+1
+! fac是0.07個半徑，所以hinge-fac僅修正一點點，對總長度沒有影響
+!繼承hinge(i)<<rod  速度跟角速度應該要全部傳遞給temp k 稱為繼承                           
 		hinges_temp(k)%X_i= hinges(i)%X_i - fac*(hinges(i)%X_i-hinges(i-1)%X_i)&
-                                             /sqrt(dot_product(hinges(i)%X_i-hinges(i-1)%X_i,hinges(i)%X_i-hinges(i-1)%X_i))
-        hinges_temp(k)%is_stationary = hinges(i)%is_stationary
+                                             /sqrt(dot_product(hinges(i)%X_i-hinges(i-1)%X_i,hinges(i)%X_i-hinges(i-1)%X_i)) !此為座標修正
+        hinges_temp(k)%is_stationary = hinges(i)%is_stationary !stationary 也有繼承
 		k = k + 1
 
         !adding to alocate all properties of hinges(i) to hinges_temp(i)
         !hinges_temp(k) = hinges(i)
         ! updating position to ensure not overlapping
-        
+
+hinges_temp(k)= hinges(i) !2018/08/04 修正錯誤 因為hinges_temp(k) 也是由 hinges(i) 分離或斷裂來的(k+1),因此要繼承(i)的所有資訊,但是位置要移動一些
+                          !2018/08/04 修正錯誤 原先程式漏了這一行,因此hinges_temp(k) 只繼承了座標 X_i 和is_stationary
+                          
 		hinges_temp(k)%X_i= hinges(i)%X_i + fac*(hinges(i+1)%X_i-hinges(i)%X_i)&
                                              /sqrt(dot_product( hinges(i+1)%X_i-hinges(i)%X_i, hinges(i+1)%X_i-hinges(i)%X_i))
         hinges_temp(k)%is_stationary = hinges(i)%is_stationary
 		k = k + 1
 	else
-		hinges_temp(k)=hinges(i)
+		hinges_temp(k)= hinges(i)  !2018/08/04  複製hinges(i)的資訊
 		k = k + 1
 	end if
 

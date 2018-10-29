@@ -75,10 +75,9 @@ do i=1, ubound( fibers, 1 )
         A1= hinges(j  )%X_i     !2018/08/02 修正改寫
         A2= hinges(j+1)%X_i     !2018/08/02 修正改寫
         
-        iSegm= 1
-        
         distanceSegms=   1d10
         IndexSegms=      0
+        iSegm= 0
         
 	    do ii= -1,1
 	        indx(1)= i_cell(1) + ii
@@ -105,10 +104,12 @@ do i=1, ubound( fibers, 1 )
                                     
 					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
                                     
-                                    distanceSegms( iSegm )= Gab_min
-                                    IndexSegms(    iSegm )= k
-print *, iSegm, k, Gab_min                                     
-                                    iSegm= iSegm + 1
+                                    if( Gab_min .lt. Threshold ) then
+                                        iSegm= iSegm + 1
+                                        distanceSegms( iSegm )= Gab_min
+                                        IndexSegms(    iSegm )= k
+                                        !print *, iSegm, k, Gab_min                                     
+                                    end if
 	                            end if
 	                        end if
                         end if
@@ -118,30 +119,28 @@ print *, iSegm, k, Gab_min
 	        end do
         end do
         
-        mSegm= iSegm - 1 
-        
+mSegm= iSegm 
+       
 call SortOrder( distanceSegms, IndexSegms, mSegm )
 
 if( mSegm > nbr_neighbors )  mSegm= nbr_neighbors
 
 do iSegm= 1, mSegm
    distance_neighbors(j,iSegm)= distanceSegms(iSegm)
-   neighbor_list(j,iSegm)= IndexSegms(iSegm)    
+   neighbor_list(j,iSegm)= IndexSegms(iSegm)  
+   !print *, iSegm, IndexSegms(iSegm), distanceSegms(iSegm)
 end do
 
-print *,"j,mSegm= ",j, mSegm        
-pause        
+!print *,"j,mSegm= ",j, mSegm        
+!pause
+
     end do
 end do
 
-
 end subroutine find_neighbors_new   
-
-                               
-                               
-                               
-                               
-subroutine find_neighbors_original( fibers,&
+                 
+                                                  
+subroutine find_neighbors_new_original( fibers,&
                                hinges,&
                                ghost_segments,&
                                nbr_neighbors,&
@@ -161,7 +160,7 @@ logical                                :: flag
 
 integer(8), dimension(:,:), allocatable:: neighbor_list
 integer,    dimension(3)               :: i_cell, nbr_bins, indx
-integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd  !error 修正2018/07/14
+integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error 修正2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
@@ -196,6 +195,8 @@ do i=1, ubound( fibers, 1 )
         A1= hinges(j  )%X_i     !2018/08/02 修正改寫
         A2= hinges(j+1)%X_i     !2018/08/02 修正改寫
         
+        iSegm= 0
+        
 	    do ii= -1,1
 	        indx(1)= i_cell(1) + ii
 	        do jj= -1,1
@@ -220,10 +221,13 @@ do i=1, ubound( fibers, 1 )
 			                        ghost_hingeB%X_i= B2
                                     
 					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
-				                                                      
-					                flag= .false.
                                     
-					                m=1
+                                    iSegm= iSegm + 1
+                                    flag= .false.
+                                    m= 1
+                                    
+!print *, iSegm, k, Gab_min, Threshold
+		               
 				                    do while( (m.le.nbr_neighbors) .and. (flag.eqv. .false.) )
                                         
 					                    if( (Gab_min .lt. Threshold) .and.&
@@ -240,11 +244,9 @@ do i=1, ubound( fibers, 1 )
 						                    distance_neighbors(j,m)= Gab_min
 				                            neighbor_list(j,m)= k
                                             
-                                        end if
-                                            
+                                        end if         
 				                        m=m+1
-                                    end do
-print *,"j= ",j, m                                    
+                                    end do                    
 	                            end if
 	                        end if
                         end if
@@ -253,11 +255,16 @@ print *,"j= ",j, m
 	            end do
 	        end do
         end do
-pause        
+
+!do iSegm= 1, nbr_neighbors
+!   print *, iSegm, neighbor_list(j,iSegm), distance_neighbors(j,iSegm)
+!end do
+!pause 
+
     end do
 end do
 
-end subroutine find_neighbors_original   
+end subroutine find_neighbors_new_original
 
 subroutine SortOrder( dinstSegm, indexSegm, mSegm )
 
