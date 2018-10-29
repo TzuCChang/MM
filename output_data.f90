@@ -1,3 +1,4 @@
+!======================================================================
 module m_OutputData   !2018/07/21  change name
     
 use m_DataStructures
@@ -38,19 +39,16 @@ real(8),   dimension(3)     :: r
 end subroutine output_data
 
 
-subroutine output_Length( t, fibers, hinges, frame, printVelocities )  !2018/08/11修正
-type(rod),   dimension(:),  allocatable :: hinges
+subroutine output_Length( t, fibers, hinges )  !2018/08/11修正
 type(fiber), dimension(:),  allocatable :: fibers
-logical                                 :: printVelocities
-integer(8)                  :: frame
-
+type(rod),   dimension(:),  allocatable :: hinges
 real(8)                     :: FiberLength, SegmentLength, t
 real(8), dimension(3)       :: coord
 integer(8)                  :: i, j, k, mSegments
 real                        :: length, lengthAvg
 integer                     :: mm, nn, tt
 
-  
+FiberLength= 0
 mSegments= 0
 coord= 0
 do i= 1, ubound (fibers,1)  
@@ -68,13 +66,97 @@ nn= ubound(fibers,1)          !2018/08/11   total Fiber number
 length= FiberLength           !2018/08/11   total Fiber length
 lengthAvg= length/nn          !2018/08/11   mean  Fiber length
 
-  print *, tt, nn, mm, length, lengthAvg
   write(300,*), tt, nn, mm, length, lengthAvg
-  write(301,*), tt, nn, mm, length, lengthAvg
   
-!pause
+  print *,      "@@@", tt, nn, mm, length, lengthAvg
+  write(301,*), "@@@", tt, nn, mm, length, lengthAvg
+  !pause
 
 end subroutine output_Length
 
+!======================================================================
+subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 新增
+
+type(fiber), dimension(:), allocatable :: fibers
+integer(8),  dimension(:), allocatable :: indexA
+real(8)      :: t
+integer(8)   :: i, j, maxSegments
+integer      :: tt
+
+
+if( allocated(indexA) .eq. .false. )  then
+    
+    maxSegments= 1
+    do i= 1, ubound(fibers,1)  
+       j= fibers(i)%nbr_hinges-1
+       maxSegments= max( maxSegments,j )
+    end do
+    
+    allocate( indexA(maxSegments) )
+    
+end if
+
+indexA= 0
+do i= 1, ubound (fibers,1)
+   j= fibers(i)%nbr_hinges-1  !2018/08/12  segment number of fiber(i)
+   indexA(j)= indexA(j) + 1
+end do
+
+tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
+maxSegments= ubound(indexA,1)
+
+print *,"&&&", tt, ubound(fibers,1), maxSegments
+write(302,*),  tt, ubound(fibers,1), maxSegments
+do j=1, maxSegments
+  print *, "&&&( ", j, indexA(j)
+  write(302,*),     j, indexA(j) 
+end do
+!pause
+
+end subroutine output_LengthDistribution
+
+subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 新增
+type(fiber), dimension(:),   allocatable :: fibers
+type(rod),   dimension(:),   allocatable :: hinges
+real(8),     dimension(:,:)              :: AA
+real(8),     dimension(3)                :: ra
+real(8)      :: t, length, trace_A
+integer(8)   :: ia, ja,  mm
+integer      :: tt, i, j
+
+AA= 0
+mm= 0
+do ia= 1, ubound (fibers,1)
+do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
+   ra= hinges(ja+1)%X_i - hinges(ja)%X_i
+       length= sqrt( dot_product(ra,ra) )
+   ra= ra/length
+   do i=1,3
+   do j=1,3
+      AA(i,j)= AA(i,j) + ra(i)*ra(j)
+   end do
+   end do
+   mm= mm + 1 
+end do
+end do
+
+tt= t*1.0e6 + 0.5                    !2018/08/12  +0.5 的用意是4捨5入
+trace_A= AA(1,1) + AA(2,2) + AA(3,3)
+
+AA= AA/trace_A
+
+print *, "### trace ",trace_A, mm
+print *, "###", tt, ubound (fibers,1)
+print *, AA
+
+write(302,*), "###", tt, ubound (fibers,1)
+write(302,*), AA
+
+write(303,*), tt, ubound (fibers,1)
+write(303,*), AA
+!pause
+
+end subroutine output_OrientationTensor
 
 end module m_OutputData
+!======================================================================

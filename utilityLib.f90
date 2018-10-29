@@ -129,15 +129,7 @@ are_boxes_intersect= (abs(a.X(1) - b.X(1)) * 2 < (a.W(1) + b.W(1))) .and.&
 end function are_boxes_intersect
 
 !====================================================================
-
-subroutine dist_pt_seg(ra,&
-                       rb,&
-                       rb_end,&
-		               pb,&
-                       Gab,&
-                       Gab_norm,&
-                       Sba,&
-                       coll_course)
+subroutine dist_pt_seg( ra, rb, rb_end, pb, Gab, Gab_norm, Sba, coll_course )
 
 real(8), dimension(3):: ra, rb, rb_end, pb, Gab
 real(8)              :: Sba, Gab_norm, lb
@@ -166,10 +158,7 @@ end subroutine dist_pt_seg
 
 !====================================================================
                        
-subroutine dist_pt_pt(ra,&
-                      rb,&
-                      Gab,&
-                      Gab_norm )
+subroutine dist_pt_pt( ra, rb, Gab, Gab_norm )
 
 real(8), dimension(3):: ra, rb, Gab
 real(8)              :: Gab_norm
@@ -305,7 +294,7 @@ end subroutine dist_segments
        
 !====================================================================
                      
-subroutine find_curvature(p1, p2, p3, curv)
+subroutine find_curvature( p1, p2, p3, curv )
 implicit none 
 real(8)                :: a,b,c,l1,l2,l2nb,n,rad,dotp,curv,scale1,scale2,t
 real(8), dimension(3)  :: center, p1,p2,p3,v1,v2,v1n,v2n,v2nb
