@@ -8,7 +8,7 @@ implicit none
 contains
 
 
-subroutine GhostSegments_Location( fibers, hinges, ghost_segments, box_size, box_dimension ) !2018/09/12 corrected
+subroutine GhostSegments_Location( fibers, hinges, ghost_segments, box_size, box_dimension ) !2018/09/12修正
 
 implicit none
 type(fiber),   dimension(:), allocatable :: fibers
@@ -67,8 +67,6 @@ integer(8)                  :: i, j, k, m, n
 
 end subroutine  GhostSegments_Location
 
-!====================================================================
-
 subroutine GhostSegments_NewLocation( hinges, ghost_segments, box_size )  !2018/09/08  Add
 
 type(rod),     dimension(:)              :: hinges
@@ -84,10 +82,10 @@ integer                                  :: ix, iz
 !$OMP DO PRIVATE (i, j, k)
 
     
-     do i= 1, ubound( ghost_segments, 1 )       !from segment til last segment
+     do i= 1, ubound( ghost_segments, 1 )
 
-        j= ghost_segments(i)%orig_pos(1)        !beginning
-        k= ghost_segments(i)%orig_pos(2)        !end
+        j= ghost_segments(i)%orig_pos(1)
+        k= ghost_segments(i)%orig_pos(2)
         
             ix= ghost_segments(i)%ix
             iz= ghost_segments(i)%iz
@@ -114,9 +112,8 @@ end do
 
 end subroutine GhostSegments_NewLocation 
 
-!====================================================================
 
-subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )  !2018/09/12 corrected
+subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )  !2018/09/12 修正
 type(fiber),   dimension(:),  allocatable :: fibers
 type(rod),     dimension(:),  allocatable :: hinges
 type(segment), dimension(:), allocatable  :: ghost_segments
@@ -141,22 +138,22 @@ integer                     :: mm1, mm2, mm3
         maxLength= max( maxLength, FiberLength )
      end do
 
-     mm1= 1 + int( 0.5 + maxLength/box_size(1) )
-     mm2= 1 + int( 0.5 + maxLength/box_size(2) )
-     mm3= 1 + int( 0.5 + maxLength/box_size(3) )
+     mm1= 1 + int( 0.5d0 + 0.6d0*maxLength/box_size(1) )	!180922修正*0.6 因為質量中心一定在裡面 所以纖維最多有一半長度落在box外面 所以只需要計算一半的長度
+     mm2= 1 + int( 0.5d0 + 0.6d0*maxLength/box_size(2) )	!180922
+     mm3= 1 + int( 0.5d0 + 0.6d0*maxLength/box_size(3) )	!180922
      
      box_dimension(1)= mm1
      box_dimension(2)= mm2
      box_dimension(3)= mm3
 
-     nbr_segments= 0                                                !2018/09/09  Count the number of segments
+     nbr_segments= 0          !2018/09/09  Count the number of segments
      do i=1, ubound(fibers,1)
-        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1       !2018/09/08 
+        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1 !2018/09/08 
      end do
      
-     numClones= (mm1+mm1+1)*(mm3+mm3+1)                             !2018/09/09
+     numClones= (mm1+mm1+1)*(mm3+mm3+1)                       !2018/09/09
      
-     nbr_GhostSegments= nbr_segments*numClones                      !2018/09/09   
+     nbr_GhostSegments= nbr_segments*numClones                !2018/09/09   
      
      if( allocated(ghost_segments) ) deallocate( ghost_segments )
      

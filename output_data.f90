@@ -39,43 +39,56 @@ real(8),   dimension(3)     :: r
 end subroutine output_data
 
 
-subroutine output_Length( t, fibers, hinges )               !2018/08/11 corrected
+subroutine output_Length( t, fibers, hinges )  !2018/09/22  修正
 type(fiber), dimension(:),  allocatable :: fibers
 type(rod),   dimension(:),  allocatable :: hinges
-real(8)                     :: FiberLength, SegmentLength, t
+
+real(8)                     :: FiberLength_Total, FiberLength, SegmentLength, t
 real(8), dimension(3)       :: coord
 integer(8)                  :: i, j, k, mSegments
 real                        :: length, lengthAvg
 integer                     :: mm, nn, tt
 
-FiberLength= 0
-mSegments= 0
-coord= 0
-do i= 1, ubound (fibers,1)  
-do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
-   coord= hinges(j+1)%X_i-hinges(j)%X_i
-   FiberLength= FiberLength + sqrt( dot_product(coord,coord) )
-   mSegments= mSegments + 1
-end do
-end do        
-coord= coord/real(mSegments)  !2018/08/11 
 
-tt= t*1.e6 + 0.5              !2018/08/11   make it integer,unit=micro seconds
-mm= mSegments                 !2018/08/11   total segments number
-nn= ubound(fibers,1)          !2018/08/11   total Fiber number
-length= FiberLength           !2018/08/11   total Fiber length
-lengthAvg= length/nn          !2018/08/11   mean  Fiber length
+    FiberLength_Total= 0.d0
+    mSegments= 0
 
-  write(300,*), tt, nn, mm, length, lengthAvg
+    do i= 1, ubound (fibers,1)
+    
+       FiberLength= 0.d0
+       do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+          coord= hinges(j+1)%X_i-hinges(j)%X_i
+          SegmentLength= sqrt( dot_product(coord,coord) )
+          FiberLength= FiberLength + SegmentLength
+          mSegments= mSegments + 1      
+       end do
+   
+       FiberLength_Total= FiberLength_Total+FiberLength
+!      print *,i, FiberLength
+       
+    end do
+
+    tt= t*1.e6 + 0.5                              !2018/08/11   化成整數,單位=micro seconds
+    mm= mSegments                                 !2018/08/11   total segments number
+    nn= ubound(fibers,1)                          !2018/08/11   total Fiber number
+    length= 1000*FiberLength_Total                !2018/09/22   total Fiber length(mm)
+    lengthAvg= 1000*FiberLength_Total/nn          !2018/09/22   mean  Fiber length(mm)
+
+    write(300,*), tt, nn, mm, length, lengthAvg
   
-  print *,      "@@@", tt, nn, mm, length, lengthAvg
-  write(301,*), "@@@", tt, nn, mm, length, lengthAvg
-  !pause
+    print *,      "@@@", tt, nn, mm, length, lengthAvg
+    write(301,*), "@@@", tt, nn, mm, length, lengthAvg
+!   pause
 
 end subroutine output_Length
 
+
+
+
+
+
 !======================================================================
-subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 add
+subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 新增
 
 type(fiber), dimension(:), allocatable :: fibers
 integer(8),  dimension(:), allocatable :: indexA
@@ -98,11 +111,11 @@ end if
 
 indexA= 0
 do i= 1, ubound (fibers,1)
-   j= fibers(i)%nbr_hinges-1        !2018/08/12  segment number of fiber(i)
+   j= fibers(i)%nbr_hinges-1  !2018/08/12  segment number of fiber(i)
    indexA(j)= indexA(j) + 1
 end do
 
-tt= t*1.0e6 + 0.5                   !2018/08/12  +0.5 is for the rounding
+tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
 maxSegments= ubound(indexA,1)
 
 !print *,"&&&", tt, ubound(fibers,1), maxSegments
@@ -115,8 +128,7 @@ end do
 
 end subroutine output_LengthDistribution
 
-!======================================================================
-subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 add
+subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 新增
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 real(8),     dimension(:,:)              :: AA
@@ -134,14 +146,14 @@ do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
    ra= ra/length
    do i=1,3
    do j=1,3
-      AA(i,j)= AA(i,j) + ra(i)*ra(j)*length     !2018/08/14  the length can represent the volume because the radius is the same
+      AA(i,j)= AA(i,j) + ra(i)*ra(j)*length   !2018/08/14  加入權重長度,因直徑一樣,長度代表體積
    end do
    end do
    mm= mm + 1 
 end do
 end do
 
-tt= t*1.0e6 + 0.5                               !2018/08/12  +0.5 is for the rounding
+tt= t*1.0e6 + 0.5                    !2018/08/12  +0.5 的用意是4捨5入
 trace_A= AA(1,1) + AA(2,2) + AA(3,3)
 
 AA= AA/trace_A
@@ -159,13 +171,12 @@ write(303,*), AA
 
 end subroutine output_OrientationTensor
 
-!======================================================================
 subroutine output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 integer(8)                               :: iii, jjj, kkk, nbr_hinges
 
-        open(304,file='OUTPUT/PositionsForTheMoment.txt')               !2018/09/02
+        open(304,file='OUTPUT/PositionsForTheMoment.txt')  !2018/09/02
         kkk=1
         write (304,*), ubound(fibers,1)
         do iii=1, ubound(fibers,1)
@@ -179,6 +190,146 @@ integer(8)                               :: iii, jjj, kkk, nbr_hinges
 !pause
 
 end subroutine output_PositionsForTheMomemt
+
+subroutine output_FiberLengthModification( fibers, hinges )  !2018/09/22  add
+type(fiber) , dimension(:)            :: fibers
+type (rod), dimension(:)              :: hinges
+real(8)                               :: length, FiberLength, ScaleFactor
+integer(8)                            :: i,j,k,l,jp1
+real(8), dimension(3)                 :: box_size, coord
+logical                               :: periodic_boundary
+
+
+do i=1, ubound (fibers,1)   !2018/09/22  add
+    
+    FiberLength= 0.d0
+	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
+        jp1= j+1        
+		coord= hinges(jp1)%X_i-hinges(j)%X_i
+        length= sqrt( dot_product(coord, coord) )
+        
+        FiberLength= FiberLength + length
+		hinges(j)%length2= length
+    end do
+    fibers(i)%Length= FiberLength
+    
+end do
+
+!2018/09/22 將每一根Fiber長度修正為5mm
+ScaleFactor= 1.0d0
+FiberLength= 5.0d-3  !2018/09/22 將每一根Fiber長度修正為5mm
+
+do i=1, ubound (fibers,1)  !2018/09/22  add
+    ScaleFactor= FiberLength/fibers(i)%Length
+	do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+        jp1= j+1
+        coord= hinges(jp1)%X_i - hinges(j)%X_i
+        length= sqrt( dot_product(coord, coord) )
+        
+        coord= coord/length
+        hinges(jp1)%X_i= hinges(j)%X_i + coord*hinges(j)%length2*ScaleFactor
+    end do
+end do
+
+end subroutine output_FiberLengthModification
+
+
+subroutine output_Initial_Positions_New( fibers, hinges, box_size )   !2018/09/22
+        
+implicit none
+type(fiber),   dimension(:), allocatable :: fibers
+type(rod),     dimension(:), allocatable :: hinges
+
+real(8), dimension(3)       :: box_size, coord
+real(8)                     :: del_X, del_Y, del_Z, x, y, z
+
+integer                     :: mm1, mm2, mm3, mm1_A, mm1_B, mm2_A, mm2_B, mm3_A, mm3_B, ix, iy, iz
+integer                     :: i, j, N_Fiber, N_hinge
+
+     open(305,file='OUTPUT/Initial_Positions_New.txt')  !2018/09/22
+        
+     mm1_A= -1
+     mm1_B=  1
+     
+     mm2_A=  0
+     mm2_B=  1
+     
+     mm3_A= -1
+     mm3_B=  1
+     
+mm1_A=  0
+mm1_B=  0
+
+mm2_A=  0
+mm2_B=  0
+     
+mm3_A=  0
+mm3_B=  0     
+     
+     mm1= 1 + mm1_B - mm1_A
+     mm2= 1 + mm2_B - mm2_A
+     mm3= 1 + mm3_B - mm3_A
+     
+     N_Fiber= ubound(fibers,1)
+     
+     N_Fiber= N_Fiber*mm1*mm2*mm3
+
+     print *, mm1_A, mm1_B, mm1
+     print *, mm2_A, mm2_B, mm2
+     print *, mm3_A, mm3_B, mm3
+     print *,"box_size(1)= ",box_size(1)*mm1
+     print *,"box_size(2)= ",box_size(2)*mm2
+     print *,"box_size(3)= ",box_size(3)*mm3    
+     print *,N_Fiber
+     
+     write(301,*), mm1_A, mm1_B, mm1
+     write(301,*), mm2_A, mm2_B, mm2
+     write(301,*), mm3_A, mm3_B, mm3
+     write(301,*), "box_size(1)= ",box_size(1)*mm1
+     write(301,*), "box_size(2)= ",box_size(2)*mm2
+     write(301,*), "box_size(3)= ",box_size(3)*mm3    
+     write(301,*), N_Fiber
+     
+     
+     write (305,*), N_Fiber
+
+     do i=1, ubound(fibers,1)
+
+        do ix= mm1_A, mm1_B
+        do iy= mm2_A, mm2_B
+        do iz= mm3_A, mm3_B
+            
+            del_X= ix*box_size(1)
+            del_Y= ix*box_size(2)
+            del_Z= iz*box_size(3)
+              
+            N_hinge= fibers(i)%nbr_hinges
+!           print *,N_hinge
+            write (305,*), N_hinge
+ 
+           do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+            
+              x= hinges(j)%X_i(1) + del_X
+              y= hinges(j)%X_i(2) + del_Y
+              z= hinges(j)%X_i(3) + del_Z
+ 
+!             print *, " 0 ", real(x,4), real(y,4), real(z,4)
+!             write (305,*)," 0 ", real(x,4), real(y,4), real(z,4)
+              write (305,*)," 0 ", x, y, z
+           end do
+           
+        end do
+        end do
+        end do
+!pause
+     end do    
+
+     close( 305 )
+!pause     
+
+end subroutine output_Initial_Positions_New
+
+
 
 end module m_OutputData
 !======================================================================

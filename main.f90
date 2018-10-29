@@ -31,7 +31,7 @@ logical                                   :: recover_simulation, isOutputMessage
 logical                                   :: is_fric_wall, printVelocities 
 
 integer(8), dimension(:,:), allocatable :: neighbor_list
-integer(8), dimension(:),   allocatable :: indexA                       !2018/08/12
+integer(8), dimension(:),   allocatable :: indexA                     !2018/08/12
 integer(8)                              :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period
 integer(8)                              :: i, j, k, n, frame, nbr_Fibers_OLD, nbr_Fibers_NEW, nbr_Fibers_INC
 integer(8)                              :: iii, jjj, kkk, nbr_hinges    !2018/08/31
@@ -46,14 +46,14 @@ real(8), parameter                     :: pi=3.141592
 !*******************************************************************
 
 ! Default values
+
 simParameters%IsPeriodicY =.false. 
 
 
 open(300,file='OUTPUT/meanLength.txt')
 open(301,file='OUTPUT/OutputMessage.txt')
-open(302,file='OUTPUT/FiberLengthDistribution.txt')     !2018/08/12
-open(303,file='OUTPUT/OrientationTensor.txt')           !2018/08/12
-!open(304,file='OUTPUT/PositionsForTheMoment.txt')      !2018/09/02
+open(302,file='OUTPUT/FiberLengthDistribution.txt')   !2018/08/12
+open(303,file='OUTPUT/OrientationTensor.txt')         !2018/08/12
 
 open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
@@ -76,8 +76,8 @@ print *,      "Hydrodynamic representation being used is BEAD"
 write(301,*), "Hydrodynamic representation being used is BEAD"
 #endif
 
-print *,      "time(micro sec.), Fiber No., Segments No., Total Length, mean Length" 
-write(300,*), "time(micro sec.), Fiber No., Segments No., Total Length, mean Length" 
+print *,      "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
+write(300,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
 
  allocate( AA(3,3) )
 
@@ -107,10 +107,14 @@ write(300,*), "time(micro sec.), Fiber No., Segments No., Total Length, mean Len
                   distanceFactor,&
                   simParameters )
 
-call fiber_regroup_minmax_hinges(   fibers, hinges )                !2018/08/05 add
-call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add
-call fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
-call GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )    !2018/09/12 add
+
+start = OMP_get_wtime()
+
+i= 0 
+t= 0.d0                                                           !2018/07/14 增加
+nbr_Fibers_INC= 0                                                 !2018/07/14 修正
+nbr_Fibers_NEW= ubound(fibers,1)                                  !2018/07/14 修正
+nbr_Fibers_OLD= nbr_Fibers_NEW                                    !2018/07/14 修正
 
 Inertia_Moment=(pi/4.d0)*r_fiber**4d0
 
@@ -120,24 +124,34 @@ else
 	n=1
 	frame =1
 end if
-start = OMP_get_wtime()
 
-call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 corrected
+call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 修正字串
 
-i= 0 
-t= 0.d0                                                          !2018/07/14 add
-nbr_Fibers_INC= 0                                                !2018/07/14 corrected
-nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 corrected
-nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 corrected
 
-call output_Length( t, fibers, hinges )                          !2018/08/12 corrected
-call output_LengthDistribution( t, fibers, indexA )              !2018/08/12 add
-call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 add
 
-          
+call fiber_regroup_minmax_hinges(   fibers, hinges )                !2018/08/05 add
+call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add
+call fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
+
+call update_periodic(fibers, hinges, 0.d0, periodic_boundary, box_size, gamma_dot, 0.d0 )  !2018/09/22 add
+
+call fiber_regroup_minmax_hinges(   fibers, hinges )                                       !2018/09/22 add
+call fiber_regroup_minmax_segments( fibers, hinges )                                       !2018/09/22 add
+
+call GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension )    !2018/09/12 add
+
+!call output_FiberLengthModification( fibers, hinges )              !2018/09/22 修正
+!call output_Initial_Positions_New( fibers, hinges, box_size )      !2018/09/22 增加
+!call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/22 因為剛開始多一樣,不用輸出
+
+call output_Length( t, fibers, hinges )                             !2018/08/12 修正
+call output_LengthDistribution( t, fibers, indexA )                 !2018/08/12 增加
+call output_OrientationTensor( t, fibers, hinges, AA )              !2018/08/12 增加
+
+
 do i=n,  nbr_intgr
  
-    t = dt*i                                                     !2018/07/14 corrected
+    t = dt*i                                                     !2018/07/14 修正
     
     nbr_Fibers_OLD= ubound(fibers,1)                             !2018/08/11
 
@@ -168,19 +182,19 @@ do i=n,  nbr_intgr
        call find_neighbors_new( fibers, hinges, ghost_segments, nbr_neighbors, neighbor_list,&
                                 distance_neighbors, r_fiber, cells, Nbr_bins, distanceFactor )
          
-!      call fiber_regroup_minmax_hinges(   fibers, hinges )             !2018/08/05 add
-!      call fiber_regroup_minmax_segments( fibers, hinges )             !2018/08/05 add
-!      call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 add
-
+!      call fiber_regroup_minmax_hinges(   fibers, hinges )            !2018/08/05 add
+!      call fiber_regroup_minmax_segments( fibers, hinges )         !2018/08/05 add
+!      call output_OrientationTensor( t, fibers, hinges, AA )          !2018/08/12 增加
+!      call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges) !2018/09/01 因為沒有用到斷裂
        
     end if
 
-    nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 add
+    nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 增加
 
-    if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD + nbr_Fibers_INC) ) then       !2018/08/12 add
-         call output_Length( t, fibers, hinges )                            !2018/08/12 corrected       
-!        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 add
-         isOutputMessage= .true.                                            !2018/08/12 add
+    if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD + nbr_Fibers_INC) ) then       !2018/08/12 增加
+         call output_Length( t, fibers, hinges )                            !2018/08/12 修正       
+!        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 增加
+         isOutputMessage= .true.                                            !2018/08/12 增加
     end if    
 	
 	!call cpu_time(start)
@@ -199,10 +213,10 @@ do i=n,  nbr_intgr
 	!end do
     !call cpu_time(start) 
 
-    call GhostSegments_NewLocation( hinges, ghost_segments, box_size )                  !2018/09/08  Ghost Segments Location    
+    call GhostSegments_NewLocation( hinges, ghost_segments, box_size ) !2018/09/08  Ghost Segments Location    
 
  	call excl_VolForceMomentsTotal( fibers, hinges, ghost_segments, neighbor_list,&
-                                    nbr_neighbors, r_fiber, fric_coeff, ex_vol_const )  !2018/09/08 corrected
+                                    nbr_neighbors, r_fiber, fric_coeff, ex_vol_const )  !2018/09/08  修正
                                     
     !call cpu_time(finish)
     !print *, "Interactions", finish-start
@@ -210,9 +224,9 @@ do i=n,  nbr_intgr
     
     if( .NOT. simParameters%IsPeriodicY ) then
         
-         !call fiber_regroup_minmax_hinges( fibers, hinges )                            !2018/08/05 add
-!        call fiber_regroup_minmax_segments(fibers, hinges )                            !2018/08/05 add
-!        call output_OrientationTensor( t, fibers, hinges, AA )                         !2018/08/12 add             
+         !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
+!        call fiber_regroup_minmax_segments(fibers, hinges )    !2018/08/05 add
+!        call output_OrientationTensor( t, fibers, hinges, AA )     !2018/08/12 增加              
          
          call excl_VolForceMomentsWalls2( fibers, hinges, box_size, is_fric_wall,&
                                           gamma_dot, r_fiber, fric_coeff, ex_vol_const) !2018/07/21 change name
@@ -244,14 +258,14 @@ do i=n,  nbr_intgr
  	if (MODULO(i,writ_period)==0 ) then
 
  		call output_data(   t, fibers, hinges, frame, printVelocities )
-        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 add
-        call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 add 
-        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 add
+        call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 增加
+        call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 增加 
+        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 跟writ_period一起輸出,可以在Fibers.in給定
         
-        call fiber_regroup_minmax_segments( fibers, hinges )               !2018/08/05 add        
+        call fiber_regroup_minmax_segments( fibers, hinges )            !2018/08/05 add        
         
         if( isOutputMessage .eq. .false. ) then
-            call output_Length( t, fibers, hinges )                        !2018/08/12 add
+            call output_Length( t, fibers, hinges )                        !2018/08/12 修正
         end if
         
  		frame=frame+1
@@ -272,7 +286,6 @@ close(300)
 close(301)
 close(302)                     !2018/08/12
 close(303)                     !2018/08/12
-!close(304)                    !2018/09/02
 
 close (3) 
 close (5)

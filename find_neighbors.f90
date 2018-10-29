@@ -8,8 +8,6 @@ use omp_lib
 implicit none
 contains
 
-
-!====================================================================    
 subroutine find_neighbors_new( fibers,&
                                hinges,&
                                ghost_segments,&
@@ -33,7 +31,7 @@ integer(8), dimension(:,:), allocatable:: neighbor_list
 integer(8), dimension(:),   allocatable:: IndexSegms
 
 integer,    dimension(3)               :: i_cell, nbr_bins, indx
-integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error corrected 2018/07/14 (change to integer 8)
+integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error 修正2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 
@@ -43,9 +41,9 @@ real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
 real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
 real(8)                                :: distance_factor, ex_vol_const, fric_coeff
 
-epsilon= 3*tiny(1d0)                    !epsilon is used for avoiding =0,   
+epsilon= 3*tiny(1d0)
 
-threshold= distance_factor*r_fiber      !the min distance between 2 fibers cannot below threshold, or it will interact !distance factor usually = 3*radius
+threshold= distance_factor*r_fiber
 
 ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
                  !is used here to find the distances without being concerned with the forces...
@@ -73,27 +71,27 @@ IndexSegms=      0
 do i=1, ubound( fibers, 1 )
 	do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         
-	    i_cell= cells(hinges(j)%ind)%indx       !icell = smaill cell i j k 
-        A1= hinges(j  )%X_i                     !2018/08/02 corrected
-        A2= hinges(j+1)%X_i                     !2018/08/02 corrected
+	    i_cell= cells(hinges(j)%ind)%indx
+        A1= hinges(j  )%X_i     !2018/08/02 修正改寫
+        A2= hinges(j+1)%X_i     !2018/08/02 修正改寫
         
         distanceSegms=   1d10
         IndexSegms=      0
         iSegm= 0
         
-	    do ii= -1,1                             !compare the small cell's neighbor
+	    do ii= -1,1
 	        indx(1)= i_cell(1) + ii
 	        do jj= -1,1
 	            indx(2)= i_cell(2) + jj
 	            do kk= -1,1
 	               indx(3)= i_cell(3) + kk
 	               indd= (indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1) 
-	               do k= cells(indd)%ghost_limits(1), cells(indd)%ghost_limits(2)               !k represent the positon in this cell
+	               do k= cells(indd)%ghost_limits(1), cells(indd)%ghost_limits(2)
                        
 	                    if( cells(indd)%ghost_limits(1).ne.0 ) then 
 
-                            B1= ghost_segments(k)%A !2018/08/02 corrected
-                            B2= ghost_segments(k)%B !2018/08/02 corrected
+                            B1= ghost_segments(k)%A !2018/08/02 修正改寫
+                            B2= ghost_segments(k)%B !2018/08/02 修正改寫
 
 	                        if( are_boxes_intersect( A1, A2, B1, B2, r_fiber, 6*r_fiber ) ) then
 		                        if( ( abs(dot_product(B1-A1,B1-A1)) .ge. epsilon ) .and.&  
@@ -104,7 +102,7 @@ do i=1, ubound( fibers, 1 )
 			                        ghost_hingeA%X_i= B1
 			                        ghost_hingeB%X_i= B2
                                     
-					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min )    !2018/08/02 corrected
+					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
                                     
                                     if( Gab_min .lt. Threshold ) then
                                         iSegm= iSegm + 1
@@ -141,7 +139,7 @@ end do
 
 end subroutine find_neighbors_new   
                  
-!====================================================================                                                  
+                                                  
 subroutine find_neighbors_new_original( fibers,&
                                hinges,&
                                ghost_segments,&
@@ -162,7 +160,7 @@ logical                                :: flag
 
 integer(8), dimension(:,:), allocatable:: neighbor_list
 integer,    dimension(3)               :: i_cell, nbr_bins, indx
-integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error corrected 2018/07/14
+integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error 修正2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
@@ -194,8 +192,8 @@ do i=1, ubound( fibers, 1 )
 	do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         
 	    i_cell= cells(hinges(j)%ind)%indx
-        A1= hinges(j  )%X_i     !2018/08/02 corrected
-        A2= hinges(j+1)%X_i     !2018/08/02 corrected
+        A1= hinges(j  )%X_i     !2018/08/02 修正改寫
+        A2= hinges(j+1)%X_i     !2018/08/02 修正改寫
         
         iSegm= 0
         
@@ -210,8 +208,8 @@ do i=1, ubound( fibers, 1 )
                        
 	                    if( cells(indd)%ghost_limits(1).ne.0 ) then 
 
-                            B1= ghost_segments(k)%A !2018/08/02 corrected
-                            B2= ghost_segments(k)%B !2018/08/02 corrected
+                            B1= ghost_segments(k)%A !2018/08/02 修正改寫
+                            B2= ghost_segments(k)%B !2018/08/02 修正改寫
 
 	                        if( are_boxes_intersect( A1, A2, B1, B2, r_fiber, 6*r_fiber ) ) then
 		                        if( ( abs(dot_product(B1-A1,B1-A1)) .ge. epsilon ) .and.&  
@@ -222,7 +220,7 @@ do i=1, ubound( fibers, 1 )
 			                        ghost_hingeA%X_i= B1
 			                        ghost_hingeB%X_i= B2
                                     
-					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 corrected
+					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
                                     
                                     iSegm= iSegm + 1
                                     flag= .false.
@@ -267,8 +265,7 @@ do i=1, ubound( fibers, 1 )
 end do
 
 end subroutine find_neighbors_new_original
-                               
-!====================================================================
+
 subroutine SortOrder( dinstSegm, indexSegm, mSegm )
 
 integer(8), dimension(:),  allocatable :: IndexSegm, indexA

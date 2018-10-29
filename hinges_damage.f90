@@ -7,7 +7,6 @@ use m_UtilityLib
 implicit none
 contains
 
-!====================================================================    
 subroutine hinges_damage(fibers, hinges, min_curv, r_fiber)
 implicit none
 type (fiber), dimension(:), allocatable :: fibers, fibers_temp
@@ -15,25 +14,25 @@ type (rod)  , dimension(:), allocatable :: hinges, hinges_temp
 real(8)                    :: max_alpha, r_fiber, fac, alpha,min_curv,curv
 integer                    :: k, i, j, m, n
 
-!fac=0.07*r_fiber                       !2018/09/13 past (fac is the safety factor to avoid getting too close to the wall. The system will be unstable if fac is too big)
-fac=0.0001*r_fiber                      !2018/09/13 after corrected
+!fac=0.07*r_fiber   !2018/09/13 origion
+fac=0.000001*r_fiber  !2018/09/22 ­×¥¿  fac=0.0001*r_fiber
 
 do i=1, ubound(hinges,1)
 	hinges(i)%is_broken    =.false.
 	hinges(i)%is_separated =.false.
-	hinges(i)%curv = huge(0d0)          !2018/09/05 use for calculate the min and the max
+	hinges(i)%curv = huge(0d0)  !2018/09/05
 end do
 
 k=0
 
 !print *, "number of fibers" ,  ubound(fibers,1)
 do i=1, ubound(fibers,1)
-	if(fibers(i)%nbr_hinges.ge.3) then                                                  ! .ge. = >= (when fiber(i) hinge is greater than 3)
-		do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2      !let j=fiber(i)'s first hinge+1 til the second-last hinge
+	if(fibers(i)%nbr_hinges.ge.3) then 
+		do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
 
-            call find_curvature(hinges(j-1)%X_i, hinges(j)%X_i,hinges(j+1)%X_i, curv) 
+            call find_curvature(hinges(j-1)%X_i, hinges(j)%X_i,hinges(j+1)%X_i, curv)
             
-            hinges(j)%curv = curv                                                       !2018/09/05         
+            hinges(j)%curv = curv      !2018/09/05         
             
             if (.not. isnan(curv) .and. curv.le.min_curv) then 
                 !print *, "curv", curv
@@ -88,38 +87,34 @@ fibers_temp(ubound(fibers_temp,1))%nbr_hinges=ubound(hinges_temp,1)-fibers_temp(
 !end do
 
 k=1
-do i=1, ubound(hinges,1)
+do i=1, ubound(hinges,1)  !2018/09/22  ­×¥¿¿ù»~
+
+    hinges_temp(k)= hinges(i)    
+  
 	if (hinges(i)%is_broken .eqv. .true.)then
         
 		!print *, "BREAKAGE"      
         !adding to alocate all properties of hinges(i) to hinges_temp(i)
-        !hinges_temp(k) = hinges(i)
         ! updating position to ensure not overlapping
-        
-hinges_temp(k)= hinges(i) !2018/08/04 corrected hinges_temp(k) is from hinges(i) (k is after seperate or break i, so k needs to inherit all information from i, but with new positon)       
-                          !2018/08/04 corrected the old code missed this line, so hinges_temp(k) only inherits coordinate X_i and is_stationary
-
+                          
 		hinges_temp(k)%X_i= hinges(i)%X_i - fac*(hinges(i)%X_i-hinges(i-1)%X_i)&
                                              /sqrt(dot_product(hinges(i)%X_i-hinges(i-1)%X_i,hinges(i)%X_i-hinges(i-1)%X_i))
         hinges_temp(k)%is_stationary = hinges(i)%is_stationary
-		k = k + 1
 
         !adding to alocate all properties of hinges(i) to hinges_temp(i)
-        !hinges_temp(k) = hinges(i)
         ! updating position to ensure not overlapping
-
         
-hinges_temp(k)= hinges(i) !2018/08/04 corrected hinges_temp(k) is from hinges(i) (k is after seperate or break i, so k needs to inherit all information from i, but with new positon)       
-                          !2018/08/04 corrected the old code missed this line, so hinges_temp(k) only inherits coordinate X_i and is_stationary
+		k = k + 1
+
+        hinges_temp(k)= hinges(i) !2018/08/04 ­×¥¿¿ù»~ 
                           
 		hinges_temp(k)%X_i= hinges(i)%X_i + fac*(hinges(i+1)%X_i-hinges(i)%X_i)&
                                              /sqrt(dot_product( hinges(i+1)%X_i-hinges(i)%X_i, hinges(i+1)%X_i-hinges(i)%X_i))
         hinges_temp(k)%is_stationary = hinges(i)%is_stationary
-		k = k + 1
-	else
-		hinges_temp(k)= hinges(i)  !2018/08/04  copy the information of hinges(i)
-		k = k + 1
-	end if
+
+    end if
+    
+    k = k + 1
 
 end do
 
@@ -150,7 +145,9 @@ end do
 
 end subroutine hinges_damage
 
-!====================================================================
+
+
+
 
 subroutine hinges_SortOrder_curv( hinges )
 

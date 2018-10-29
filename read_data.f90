@@ -72,7 +72,9 @@ namelist /input/ recover_simulation,&
                 !isPeriodicY,&
                 !isPeriodicZ,&
                  distanceFactor
- isPeriodicY = .false.                        
+
+ isPeriodicY = .false.  
+ 
 	open(1,file='INPUT/Fibers.in', status='old')
 
     read(1,nml = input)
@@ -264,5 +266,6 @@ end do
 !pause    
 
 end subroutine read_data
+
                      
 end module m_ReadData

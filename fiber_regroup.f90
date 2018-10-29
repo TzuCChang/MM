@@ -1,14 +1,14 @@
 !====================================================================
-module m_FiberRegroup           !2018/07/21  change name
+module m_FiberRegroup   !2018/07/21  change name
 
-use m_DataStructures            !m represents module, Datastructure is in tipo.f90
+use m_DataStructures
 use m_UtilityLib
 
 implicit none
 contains
 
 !*===================================================================
- subroutine fiber_regroup( fibers,&                             !2018/09/08 corrected
+ subroutine fiber_regroup( fibers,&                   !2018/09/08 修正
                            hinges,&
                            ghost_segments,&
                            r_fiber,&
@@ -16,12 +16,12 @@ contains
                            cells,&
                            nbr_neighbors,&
                            neighbor_list,&
-                           Nbr_bins,&                           !2018/07/21  add
+                           Nbr_bins,&              !2018/07/21  add
                            simParameters )
 
 implicit none
 type(fiber),   dimension(:), allocatable :: fibers
-type(rod),     dimension(:), allocatable :: hinges              !1-dimension
+type(rod),     dimension(:), allocatable :: hinges
 type(segment), dimension(:), allocatable :: ghost_segments
 type(cell),    dimension(:), allocatable :: cells
 type(simulationParameters)               :: simParameters
@@ -42,7 +42,7 @@ real(8)                                  :: r_fiber, max_length, bin_length
 
      nbr_segments= 0 
      do i=1, ubound(fibers,1)
-        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1                   !2018/09/08  Count the number of segments
+        nbr_segments= nbr_segments + fibers(i)%nbr_hinges - 1 !2018/09/08  Count the number of segments
      end do
 
      if( allocated(hinge_index) ) deallocate( hinge_index )
@@ -55,7 +55,7 @@ real(8)                                  :: r_fiber, max_length, bin_length
      do i= 1, ubound(fibers,1)
      do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         r= hinges(j+1)%X_i - hinges(j)%X_i
-        max_length= max( max_length, sqrt(dot_product(r,r)) )                   !2018/08/02 find the max length amoung all segments
+        max_length= max( max_length, sqrt(dot_product(r,r)) )  !2018/08/02 找出所有的Segments的長度中最大值
      end do
      end do
 
@@ -68,36 +68,36 @@ real(8)                                  :: r_fiber, max_length, bin_length
 	    max_coor(k)= max( max_coor(k), ghost_segments(i)%A(k) )
 	    max_coor(k)= max( max_coor(k), ghost_segments(i)%B(k) )
 	 end do  
-     end do                                                                     !2018/08/02 find the frame positon that includes all segments
+     end do      !2018/08/02 找出可以容納所有的segments框架的座標範圍
 
     !bin_length= 1.25*( max_length + 2*r_fiber )!Mod 9/28/2014
     !min_coor= min_coor- 2*r_fiber
     !max_coor= max_coor+ 2*r_fiber
     
      bin_length= 1.5*( max_length + 2*r_fiber )
-     min_coor= min_coor- 2*r_fiber-max_length                                   !2018/08/02 enlarge the frame
+     min_coor= min_coor- 2*r_fiber-max_length  !2018/08/02 再擴大框架的座標範圍
      max_coor= max_coor+ 2*r_fiber+max_length
-     Nbr_bins= ceiling( (max_coor-min_coor)/bin_length )                        !2018/08/05 CEILING ( 4.80) has the value  5
-                                                                                !2018/08/05 CEILING (-2.55) has the value -2
+     Nbr_bins= ceiling( (max_coor-min_coor)/bin_length )  !2018/08/05 CEILING ( 4.80) has the value  5
+                                                          !2018/08/05 CEILING (-2.55) has the value -2
     !bin_length= (max_coor(3)-min_coor(3))/Nbr_bins(3)
     !min_coor= min_coor-bin_length
     !max_coor= min_coor+bin_length        !Mod 9/28/2014
     !Nbr_bins= Nbr_bins+2
 
-     min_coor= min_coor - 2*bin_length  !2018/08/02 enlarge the frame
-     max_coor= max_coor + 2*bin_length  !2018/08/02 enlarge the frame
-     Nbr_bins= Nbr_bins + 4             !2018/08/05 add four bin_length in total
-                                        !2018/08/05 find the corresponding box according to all ghost_segments,
-                                        !2018/08/05 divide the box in all 3 direction by the bin_length,
-                                        !2018/08/05 divide the box to a lot of small boxes,
-                                        !2018/08/05 the number of small box = Nbr_bin(1)*Nbr_bin(2)*Nbr_bin(3)
+     min_coor= min_coor - 2*bin_length  !2018/08/02 再進一步擴大框架的座標範圍
+     max_coor= max_coor + 2*bin_length  !2018/08/02 再進一步擴大框架的座標範圍
+     Nbr_bins= Nbr_bins + 4             !2018/08/05 共增加4個bin_length的空間
+                                        !2018/08/05 針對所有ghost_segments,找出包容的空間,
+                                        !2018/08/05 並且依bin_length長度大小,將其長寬高三個方向,
+                                        !2018/08/05 分別切割成許多正方體小盒子,
+                                        !2018/08/05 數量為Nbr_bin(1)*Nbr_bin(2)*Nbr_bin(3)
     !print *,"Nbr bins", Nbr_bins
 
      do j=1,ubound(hinges,1)
-        hinges(j)%indx= 0               !2018/08/05  set the initial value
+        hinges(j)%indx= 0               !2018/08/05  先設定給起始值,歸零
      end do   
-                                        !2018/08/02  floor( 3.412)=  3.00000  (find integer)
-     do i= 1, ubound(fibers,1)          !2018/08/02  floor(-3.412)= -4.00000  (find integer)
+                                        !2018/08/02   floor( 3.412)=  3.00000  取整數
+     do i= 1, ubound(fibers,1)          !2018/08/02   floor(-3.412)= -4.00000  取整數
      do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         center= ( hinges(j)%X_i + hinges(j+1)%X_i )/2                 !2018/08/02  change
         do k=1,3                           
@@ -106,16 +106,16 @@ real(8)                                  :: r_fiber, max_length, bin_length
             if( indx(k) .ge. Nbr_bins(k) ) indx(k)= Nbr_bins(k)-1
 	    end do
 	    hinges(j)%ind= (indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1)
-     end do                             !2018/08/05 determine the center of the mass for hinges(j)~(j+1)(segments) is located in the box
+     end do       !2018/08/05 判斷hinges(j)~(j+1)的segments的質量中薪點位置落在的空間小盒子內
      end do
 
      m= 1
      do j= 1, ubound(ghost_segments, 1)
         center= ( ghost_segments(j)%A + ghost_segments(j)%B )/2     !2018/08/02 change
      do k=1,3
-        indx(k)= floor( (center(k)-min_coor(k))/bin_length )+1      !2018/08/02 change
-        if( indx(k) .le. 3 )           indx(k)= 2                   !2018/08/05 change
-        if( indx(k) .ge. Nbr_bins(k) ) indx(k)= Nbr_bins(k)-1       !2018/08/05 change
+        indx(k)= floor( (center(k)-min_coor(k))/bin_length )+1   !2018/08/02 change
+        if( indx(k) .le. 3 )           indx(k)= 2                !2018/08/05 change
+        if( indx(k) .ge. Nbr_bins(k) ) indx(k)= Nbr_bins(k)-1    !2018/08/05 change
      end do   
         ghost_segment_index(m)= (indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1)
         m=m+1
@@ -237,7 +237,7 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
    m= m+1
 end do
 end do        
-coord= coord/real(m)                !2018/08/05  coord= center of mass 
+coord= coord/real(m)  !2018/08/05  coord= center of mass 
 
 print *,"cen ", coord
 write(301,*),"cen ", coord
@@ -254,7 +254,7 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
    max_coor(k)= max( max_coor(k), coord(k) )
 end do
 end do  
-end do                              !2018/08/05 find the frame positon that includes all hinges
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
 print *,"min ", min_coor
 print *,"max ", max_coor
@@ -278,7 +278,7 @@ do i=1, ubound (fibers,1)
    max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )   
 end do
-end do                              !2018/08/05 find the frame positon that includes all segments
+end do    !2018/08/05 找出可以容納所有的 segments 框架的座標範圍
 
 print *,"min ", min_coor
 print *,"max ", max_coor
@@ -291,7 +291,7 @@ write(301,*),"@@@"
 end subroutine  fiber_regroup_minmax_hinges
 
 !======================================================================
-subroutine fiber_regroup_minmax_segments( fibers, hinges ) !2018/08/05 corrected
+subroutine fiber_regroup_minmax_segments( fibers, hinges ) !2018/08/05 修正
 
 type(fiber), allocatable, dimension(:) :: fibers
 type(rod)  , allocatable, dimension(:) :: hinges
@@ -312,7 +312,7 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
    m= m+1
 end do
 end do        
-coord= coord/real(m)                !2018/08/05  coord= center of mass 
+coord= coord/real(m)  !2018/08/05  coord= center of mass 
 
 print *,"cen ", coord
 write(301,*),"cen ", coord
@@ -329,7 +329,7 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
    max_coor(k)= max( max_coor(k), coord(k) )
 end do
 end do  
-end do                              !2018/08/05 find the frame positon that includes all hinges
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
 print *,"min ", min_coor
 print *,"max ", max_coor
@@ -352,7 +352,7 @@ do i= 1, ubound (fibers,1)
    max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )
 end do  
-end do                              !2018/08/05 find the frame positon that includes all hinges
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
 print *,"min ", min_coor
 print *,"max ", max_coor

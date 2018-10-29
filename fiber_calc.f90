@@ -1,16 +1,15 @@
 !====================================================================
-module m_FiberCalc!orginally from segment_prop_calc.f90
+module m_FiberCalc
     
 use m_DataStructures
 use m_UtilityLib
 
-use m_SetVelocity                       !2018/07/22 add
+use m_SetVelocity !2018/07/22 add
 
 implicit none
 contains
 
-    
-subroutine fiber_calc_tensor( fibers,&  !2018/07/21 change name (fiber_par_calc_Tensor)
+subroutine fiber_calc_tensor( fibers,&  !2018/07/21 change name
                               hinges,&
                               r_fiber,&
                               viscosity,&
@@ -52,7 +51,7 @@ end do
 end subroutine fiber_calc_tensor   !2018/07/21 change name
                           
 !====================================================================                          
-subroutine fiber_calc( fibers,&   !2018/07/21 change name (fiber_par_calc)
+subroutine fiber_calc( fibers,&   !2018/07/21 change name
                        hinges,&
                        r_fiber,&
                        viscosity,&
@@ -90,7 +89,7 @@ end do
 end subroutine fiber_calc   !2018/07/21 change name
                           
 !====================================================================
-subroutine fiber_calc_tensor_hinge( hinge1,&    !2018/07/21 change name(hinge_par_calc_tensor)
+subroutine fiber_calc_tensor_hinge( hinge1,&    !2018/07/21 change name
                                     hinge2,&
                                     r_fiber,&
                                     viscosity,&
@@ -110,7 +109,7 @@ real(8)                :: r_fiber, viscosity, gamma_dot, epsilon_dot, segment_le
 real(8), parameter     :: pi=3.141592
 type(simulationParameters)  :: simParameters
 
-hinge1%A =0!from ch3
+hinge1%A =0
 hinge1%H =0
 hinge1%C =0
 
@@ -122,9 +121,9 @@ d = hinge1%r/hinge1%length
 
 middle_position= (hinge1%X_i+hinge2%X_i)/2d0
 
-call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !2018/07/14 changed
+call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !§ó´« 2018/07/14
 
-!call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !2018/07/14 add
+!call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !·s¼W 2018/07/14
 
 hinge1%u_oo =    vel
 hinge1%omega_oo= omega
@@ -135,11 +134,11 @@ Id = 0
 
 forall(j = 1:3) Id(j,j) = 1
 
-hinge1%A= 6.0*pi*viscosity*segment_length/2*( simParameters%X_A*outerProd(d,d) + simParameters%Y_A*(Id-outerProd(d,d)) )            !2018/07/31 p.27 equation (3.6)
+hinge1%A= 6.0*pi*viscosity*segment_length/2*( simParameters%X_A*outerProd(d,d) + simParameters%Y_A*(Id-outerProd(d,d)) )  !2018/07/31 p.27 equation (3.6)
 
 !for the Torque we need 3 Constants
  
-hinge1%C = 8.0*pi*viscosity*(segment_length/2)**3*( simParameters%X_C*outerProd(d,d) + simParameters%Y_C*(Id - outerProd(d,d)) )    !2018/07/31 p.27 equation (3.6)
+hinge1%C = 8.0*pi*viscosity*(segment_length/2)**3*( simParameters%X_C*outerProd(d,d) + simParameters%Y_C*(Id - outerProd(d,d)) )  !2018/07/31 p.27 equation (3.6)
 
 
 !print *, ' a ', a
@@ -195,7 +194,7 @@ hinge1%T=0
 end subroutine fiber_calc_tensor_hinge   !2018/07/21 change name
 
 !====================================================================
-subroutine fiber_calc_hinge( hinge1,&     !2018/07/21 change name (inge_par_calc)
+subroutine fiber_calc_hinge( hinge1,&     !2018/07/21 change name
                              hinge2,&
                              r_fiber,&
                              viscosity,&
