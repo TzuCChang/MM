@@ -7,6 +7,7 @@ use m_UtilityLib
 implicit none
 contains
 
+!====================================================================    
 subroutine hinges_damage(fibers, hinges, min_curv, r_fiber)
 implicit none
 type (fiber), dimension(:), allocatable :: fibers, fibers_temp
@@ -14,23 +15,23 @@ type (rod)  , dimension(:), allocatable :: hinges, hinges_temp
 real(8)                    :: max_alpha, r_fiber, fac, alpha,min_curv,curv
 integer                    :: k, i, j, m, n
 
-
-fac=0.07*r_fiber
+!fac=0.07*r_fiber   !2018/09/13 origion !因為不能太靠近牆壁 此為安全因素(為經驗得出的數值) 若力太大會造成系統不穩定
+fac=0.0001*r_fiber  !2018/09/13 修正
 
 do i=1, ubound(hinges,1)
 	hinges(i)%is_broken    =.false.
 	hinges(i)%is_separated =.false.
-	hinges(i)%curv = huge(0d0)  !2018/09/05
+	hinges(i)%curv = huge(0d0)  !2018/09/05 !判斷大小用到的(宣告啟始值) !通常是需要計算min max才用到的
 end do
 
 k=0
 
 !print *, "number of fibers" ,  ubound(fibers,1)
 do i=1, ubound(fibers,1)
-	if(fibers(i)%nbr_hinges.ge.3) then 
-		do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+	if(fibers(i)%nbr_hinges.ge.3) then  ! .ge. = >= !當fiber(i)的hinge大於3時
+		do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2 !令j=fiber(i)第一個hinge+1到倒數第二個hinge
 
-            call find_curvature(hinges(j-1)%X_i, hinges(j)%X_i,hinges(j+1)%X_i, curv)
+            call find_curvature(hinges(j-1)%X_i, hinges(j)%X_i,hinges(j+1)%X_i, curv) !呼叫find_curvature
             
             hinges(j)%curv = curv      !2018/09/05         
             
@@ -97,7 +98,10 @@ do i=1, ubound(hinges,1)
         
 hinges_temp(k)= hinges(i) !2018/08/04 修正錯誤 因為hinges_temp(k) 是由 hinges(i) 分離或斷裂來的(k),因此要繼承(i)的所有資訊,但是位置要移動一些       
                           !2018/08/04 修正錯誤 原先程式漏了這一行,因此hinges_temp(k) 只繼承了座標 X_i 和is_stationary
-                          
+! i斷裂變成k, k+1
+! fac是0.07個半徑，所以hinge-fac僅修正一點點，對總長度沒有影響
+!繼承hinge(i)<<rod  速度跟角速度應該要全部傳遞給temp k 稱為繼承  
+
 		hinges_temp(k)%X_i= hinges(i)%X_i - fac*(hinges(i)%X_i-hinges(i-1)%X_i)&
                                              /sqrt(dot_product(hinges(i)%X_i-hinges(i-1)%X_i,hinges(i)%X_i-hinges(i-1)%X_i))
         hinges_temp(k)%is_stationary = hinges(i)%is_stationary
@@ -148,9 +152,7 @@ end do
 
 end subroutine hinges_damage
 
-
-
-
+!====================================================================
 
 subroutine hinges_SortOrder_curv( hinges )
 
@@ -205,7 +207,7 @@ allocate( indexB( mm ) )
 
     !print *,"@@@( minCurv", real(hinges(1)%curv,4), real(hinges(2)%curv,4)
     do i1=1,mm
-       if( hinges(i1)%curv .lt. 0.0004 ) then
+       if( hinges(i1)%curv .lt. 0.1 ) then
            !print *,"B02",i1, indexB(i1), hinges(i1)%curv
            !write(301,*),"B02",i1, indexB(i1), hinges(i1)%curv
        end if

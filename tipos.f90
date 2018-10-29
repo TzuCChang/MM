@@ -21,11 +21,15 @@ real(8), dimension(3)   :: B
 integer, dimension(3)   :: ind
 integer, dimension(2)   :: orig_pos
 integer                 :: axis_loc
+integer                 :: ix
+integer                 :: iy
+integer                 :: iz
 end type segment
 
 type fiber
 integer(8)              :: nbr_hinges
 integer(8)              :: first_hinge
+real(8)                 :: Length      !2019/09/09  add
 end type fiber
 
 type rod

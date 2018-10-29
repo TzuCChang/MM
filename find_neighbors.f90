@@ -6,8 +6,13 @@ use m_UtilityLib
 
 use omp_lib
 implicit none
-contains
+    contains
 
+    !subroutine: find_neighbors_new
+!subroutine: find_neighbors_new_original
+!subroutine: SortOrder
+
+!====================================================================    
 subroutine find_neighbors_new( fibers,&
                                hinges,&
                                ghost_segments,&
@@ -31,7 +36,7 @@ integer(8), dimension(:,:), allocatable:: neighbor_list
 integer(8), dimension(:),   allocatable:: IndexSegms
 
 integer,    dimension(3)               :: i_cell, nbr_bins, indx
-integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error 修正2018/07/14
+integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error 修正2018/07/14 (change to integer 8)
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 
@@ -41,9 +46,9 @@ real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
 real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
 real(8)                                :: distance_factor, ex_vol_const, fric_coeff
 
-epsilon= 3*tiny(1d0)
+epsilon= 3*tiny(1d0) !epsilon的存在是避免等於0, 通常用於比較用 !tiny: returns the smallest positive (non zero) number in tiny(X)  
 
-threshold= distance_factor*r_fiber
+threshold= distance_factor*r_fiber !threshold代表兩根纖維靠近最近的距離不可以超過這個, 不然會產生作用 !distance factor 通常給3倍(半徑)
 
 ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
                  !is used here to find the distances without being concerned with the forces...
@@ -71,7 +76,7 @@ IndexSegms=      0
 do i=1, ubound( fibers, 1 )
 	do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         
-	    i_cell= cells(hinges(j)%ind)%indx
+	    i_cell= cells(hinges(j)%ind)%indx !icell是小cell的i j k 位置
         A1= hinges(j  )%X_i     !2018/08/02 修正改寫
         A2= hinges(j+1)%X_i     !2018/08/02 修正改寫
         
@@ -79,14 +84,14 @@ do i=1, ubound( fibers, 1 )
         IndexSegms=      0
         iSegm= 0
         
-	    do ii= -1,1
+	    do ii= -1,1!這邊比的是小盒子的周邊
 	        indx(1)= i_cell(1) + ii
 	        do jj= -1,1
 	            indx(2)= i_cell(2) + jj
 	            do kk= -1,1
 	               indx(3)= i_cell(3) + kk
 	               indd= (indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1) 
-	               do k= cells(indd)%ghost_limits(1), cells(indd)%ghost_limits(2)
+	               do k= cells(indd)%ghost_limits(1), cells(indd)%ghost_limits(2) !k代表這個cell的第幾個位置
                        
 	                    if( cells(indd)%ghost_limits(1).ne.0 ) then 
 
@@ -139,7 +144,7 @@ end do
 
 end subroutine find_neighbors_new   
                  
-                                                  
+!====================================================================                                                  
 subroutine find_neighbors_new_original( fibers,&
                                hinges,&
                                ghost_segments,&
@@ -265,7 +270,8 @@ do i=1, ubound( fibers, 1 )
 end do
 
 end subroutine find_neighbors_new_original
-
+                               
+!====================================================================
 subroutine SortOrder( dinstSegm, indexSegm, mSegm )
 
 integer(8), dimension(:),  allocatable :: IndexSegm, indexA

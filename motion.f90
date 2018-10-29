@@ -5,7 +5,8 @@ module m_Motion
     use omp_lib
     implicit none
     contains
-
+    
+!*****************************************************************************************
 subroutine motion_fiber(fibers, hinges, r_bead)
     type(fiber) , dimension(:):: fibers
     type(rod), dimension(:)   :: hinges
@@ -35,13 +36,13 @@ subroutine motion_fiber(fibers, hinges, r_bead)
 
 end subroutine motion_fiber
 
-
+!*****************************************************************************************
 subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
     ! Copy a range of a regular matrix to a banded matrix
     real(8), dimension(:,:), allocatable :: AB
     real(8)                              ::  A(:,:)
     integer(8)                           :: i1, i2, j1, j2, KL, KU, nbRows, ii, jj, j, i
-    
+
     jj =1
     do j=j1, j2
         ii =1
@@ -79,8 +80,8 @@ subroutine motion_matrix(fiber_hinges, r_bead)
         Amat = 0
     else
         !print *, " Banded Solver "
-        KL = 11
-        KU = 9
+        KL = 11 !矩陣中間寬帶 往上有11個不是0
+        KU = 9  !矩陣中間寬帶 往下有9個不是0
         allocate(AB(2*KL+KU+1,n))
         AB = 0
     end if
@@ -406,6 +407,7 @@ subroutine mini_mat(mat, vec, conn, conn2, drag_coeff_vel, drag_coeff_omega)
 
 end subroutine mini_mat
 
+!*******************************************************************
 subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     implicit none
     real(8), dimension(9,15) :: mat
@@ -438,7 +440,7 @@ subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     mat(4, 5)= -conn%A(1,2)
     mat(4, 6)= -conn%A(1,3)
     mat(4, 7)=  0.5*conn%A(1,2) *conn%r(3)  - 0.5*conn%A(1,3) *conn%r(2)
-    mat(4, 8)=  -0.5*conn%A(1,1) *conn%r(3)  + 0.5*conn%A(1,3) *conn%r(1)
+    mat(4, 8)= -0.5*conn%A(1,1) *conn%r(3)  + 0.5*conn%A(1,3) *conn%r(1)
     mat(4, 9)=  0.5*conn%A(1,1) *conn%r(2)  - 0.5*conn%A(1,2) *conn%r(1)
     mat(4,10)= -1
     !------------
@@ -471,8 +473,8 @@ subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     mat(7, 7)=  -conn%C(1,1)
     mat(7, 8)=  -conn%C(1,2)
     mat(7, 9)=  -conn%C(1,3)
-    mat(7,2)= +conn%r(3)*0.5
-    mat(7,3)= -conn%r(2)*0.5
+    mat(7, 2)= +conn%r(3)*0.5
+    mat(7, 3)= -conn%r(2)*0.5
     mat(7,11)= +conn%r(3)*0.5
     mat(7,12)= -conn%r(2)*0.5
     !------------
@@ -480,11 +482,11 @@ subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     !********************
     !mat(8,8)=1
 
-    mat(8, 7)=  -conn%C(2,1)
-    mat(8, 8)=  -conn%C(2,2)
-    mat(8, 9)=  -conn%C(2,3)
-    mat(8,1)= -conn%r(3)*0.5
-    mat(8,3)= +conn%r(1)*0.5
+    mat(8, 7)= -conn%C(2,1)
+    mat(8, 8)= -conn%C(2,2)
+    mat(8, 9)= -conn%C(2,3)
+    mat(8, 1)= -conn%r(3)*0.5
+    mat(8, 3)= +conn%r(1)*0.5
     mat(8,10)= -conn%r(3)*0.5
     mat(8,12)= +conn%r(1)*0.5
     !------------
@@ -497,8 +499,8 @@ subroutine mini_mat_tensor(mat, vec, conn,  drag_coeff_vel, drag_coeff_omega)
     mat(9, 9)=  -conn%C(3,3)
     mat(9,10)= +conn%r(2)*0.5
     mat(9,11)= -conn%r(1)*0.5
-    mat(9,1)= +conn%r(2)*0.5
-    mat(9,2)= -conn%r(1)*0.5
+    mat(9, 1)= +conn%r(2)*0.5
+    mat(9, 2)= -conn%r(1)*0.5
     !------------
     vec(9, 1)= -(conn%C(3,1)*conn%omega_oo(1)+ conn%C(3,2)*conn%omega_oo(2)+conn%C(3,3)*conn%omega_oo(3)+ conn%H(3) ) -conn%T(3)-conn%T_excl_vol(3)
     !********************
