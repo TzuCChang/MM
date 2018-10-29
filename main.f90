@@ -36,35 +36,45 @@ real(8), parameter                     :: pi=3.141592
 integer(8), dimension(:,:), allocatable:: neighbor_list
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
-logical                                :: recover_simulation
+logical                                :: recover_simulation, isOutputMessage
 type(segment), dimension(:),allocatable:: ghost_segments
 type(cell), dimension(:), allocatable  :: cells
 real(8)                                :: start, finish, start2, finish2, timex, t
 logical                                :: is_fric_wall, printVelocities 
 type(simulationParameters)             :: simParameters
 !*******************************************************************
-! Default values
 
+! Default values
+simParameters%IsPeriodicY =.false. 
+
+
+open(300,file='OUTPUT/meanLength.txt')
 open(301,file='OUTPUT/OutputMessage.txt')
 
-simParameters%IsPeriodicY =.false. 
-print *, "Maximum number of threads" , omp_get_max_threads( )  
-write(301,*), "Maximum number of threads" , omp_get_max_threads( ) 
+open(3,  file='OUTPUT/positions.out')
+open(5,  file='OUTPUT/vels.out')
+open(6,  file='OUTPUT/forces.out')
+
+!print *,"1"
+print *, "Maximum number of threads" , omp_get_max_threads()  
+write(301,*), "Maximum number of threads" , omp_get_max_threads() 
+
+!$OMP PARALLEL
+print *, "Number of threads being used" , omp_get_num_threads()
+write(301,*), "Number of threads being used" , omp_get_num_threads()
+!$OMP END PARALLEL
 
 #ifdef TENSOR            
 print *, "Hydrodynamic representation being used is TENSOR"
 write(301,*), "Hydrodynamic representation being used is TENSOR"
-
 #else
 print *, "Hydrodynamic representation being used is BEAD"
 write(301,*), "Hydrodynamic representation being used is BEAD"
-
 #endif
 
-!$OMP PARALLEL
-print *, "Number of threads being used" , omp_get_num_threads( )  
-!$OMP END PARALLEL
-!print *,"1"
+print *,      "time(micro sec.), Fiber No., Segments No., Total Length, mean Length" 
+write(300,*), "time(micro sec.), Fiber No., Segments No., Total Length, mean Length" 
+
  call  read_data( frame,&
                   recover_simulation,&
                   fric_coeff,&
@@ -95,13 +105,6 @@ call fiber_regroup_minmax_hinges(   fibers, hinges )                !2018/08/05 
 call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add
 call fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
 
-open(300,file='OUTPUT/end_to_end_distance.txt')
-
-
-open(3,file='OUTPUT/positions.out')
-open(5,file='OUTPUT/vels.out')
-open(6,file='OUTPUT/forces.out')
-
 Inertia_Moment=(pi/4.d0)*r_fiber**4d0
 
 if(recover_simulation.eqv..true.) then 
@@ -116,28 +119,30 @@ call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, s
 
 i= 0 
 t= 0.d0                                                          !2018/07/14 增加
-nbr_Fibers_INC= 1                                                !2018/07/14 修正
+nbr_Fibers_INC= 0                                                !2018/07/14 修正
 nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 修正
 
 nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 修正
 
-print *, "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD            !2018/07/14 增加
-write(301,*), "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD    !2018/08/05 增加
+print *,      "@@@(  ", i, nbr_Fibers_OLD, nbr_Fibers_NEW          !2018/07/14 增加
+write(301,*), "@@@(  ", i, nbr_Fibers_OLD, nbr_Fibers_NEW          !2018/08/05 增加
 
 call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 增加
 
 do i=n,  nbr_intgr
  
-    t = dt*i                                                    !2018/07/14 修正
+    t = dt*i                                                     !2018/07/14 修正
+    
+    nbr_Fibers_OLD= ubound(fibers,1)
 
-    !print *,"A t= ", t, i
+    isOutputMessage= .false.                                     !2018/08/11  add
 
     call cpu_time (start2)
 
     !print *, "Main 1"
  	if (MODULO(i,break_period)==0 .or. (i.eq.n) ) then 
- 	   print *,"Integration", i, t
-       write(301,*), "Integration", i, t
+! 	   print *,"Integration", i, t
+!      write(301,*), "Integration", i, t
 
        call bending_torque_whole(fibers, hinges, E_Young, Inertia_Moment)
 
@@ -178,10 +183,19 @@ do i=n,  nbr_intgr
                                   Nbr_bins,&
                                   distanceFactor )
          
-         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
-         call fiber_regroup_minmax_segments( fibers, hinges )     !2018/08/05 add
+!         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
+!         call fiber_regroup_minmax_segments( fibers, hinges )     !2018/08/05 add
 
- 	end if
+          nbr_Fibers_NEW= ubound(fibers,1)
+    
+          if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD + nbr_Fibers_INC) ) then       !2018/08/11 增加
+               print *,      "@@@(  ", i, nbr_Fibers_OLD, nbr_Fibers_NEW          !2018/08/11 增加
+               write(301,*), "@@@(  ", i, nbr_Fibers_OLD, nbr_Fibers_NEW          !2018/08/11 增加
+               call output_Length( t, fibers, hinges, frame, printVelocities )    !2018/08/11 增加        
+               isOutputMessage= .true.                                            !2018/08/11 增加
+          end if      
+
+    end if    
  	
  	!do j=1, ubound (neighbor_list,1)
  	!    
@@ -274,15 +288,11 @@ do i=n,  nbr_intgr
 ! 	if (MODULO(i,writ_period)==0 .or. (i .le. 5) ) then
 
  	if (MODULO(i,writ_period)==0 ) then
- 		call output_data(t, fibers, hinges, frame,printVelocities)
- 		frame=frame+1
-    else 
-        nbr_Fibers_NEW= ubound(fibers,1)                                         !2018/07/14 增加
-        if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD+nbr_Fibers_INC) ) then          !2018/07/14 增加
-              print *, "@@@@@( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD              !2018/07/14 增加
-              call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 增加   
-              nbr_Fibers_OLD= nbr_Fibers_NEW                                     !2018/07/14 增加 
+ 		call output_data(   t, fibers, hinges, frame, printVelocities )
+        if( isOutputMessage .eq. .false. ) then
+            call output_Length( t, fibers, hinges, frame, printVelocities )          
         end if
+ 		frame=frame+1
     end if
     
  	!call cpu_time (finish2)
@@ -291,7 +301,7 @@ do i=n,  nbr_intgr
 end do 
 
 call cpu_time(finish)
-print *, "Time Elpased",  OMP_get_wtime()-start, "s"
+print *,      "Time Elpased",  OMP_get_wtime()-start, "s"
 write(301,*), "Time Elpased",  OMP_get_wtime()-start, "s"
 close(300)
 close(301)
