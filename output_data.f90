@@ -133,7 +133,7 @@ do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
    ra= ra/length
    do i=1,3
    do j=1,3
-      AA(i,j)= AA(i,j) + ra(i)*ra(j)
+      AA(i,j)= AA(i,j) + ra(i)*ra(j)*length   !2018/08/14  加入權重長度,因直徑一樣,長度代表體積
    end do
    end do
    mm= mm + 1 
@@ -149,14 +149,32 @@ print *, "### trace ",trace_A, mm
 print *, "###", tt, ubound (fibers,1)
 print *, AA
 
-write(302,*), "###", tt, ubound (fibers,1)
-write(302,*), AA
+write(301,*), "###", tt, ubound (fibers,1)
+write(301,*), AA
 
 write(303,*), tt, ubound (fibers,1)
 write(303,*), AA
-!pause
+pause
 
 end subroutine output_OrientationTensor
+
+subroutine output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31
+type(fiber), dimension(:),   allocatable :: fibers
+type(rod),   dimension(:),   allocatable :: hinges
+integer(8)                               :: iii, jjj, kkk, nbr_hinges
+
+
+         kkk=1
+        write (304,*), ubound(fibers,1)
+        do iii=1, ubound(fibers,1)
+  	        write (304,*), fibers(iii)%nbr_hinges
+  	            do jjj=kkk, kkk+fibers(iii)%nbr_hinges-1
+  		            write (304,*),0, real(hinges(kkk)%X_i(1),4), real(hinges(kkk)%X_i(2),4), real(hinges(kkk)%X_i(3),4)
+		            kkk=kkk+1
+  	        end do
+        end do
+
+end subroutine output_PositionsForTheMomemt
 
 end module m_OutputData
 !======================================================================

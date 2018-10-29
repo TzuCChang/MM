@@ -34,6 +34,7 @@ integer(8), dimension(:),   allocatable   :: indexA                     !2018/08
 integer,    dimension(3)                :: Nbr_bins
 integer(8)                              :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period
 integer(8)                              :: i, j, k, n, frame, nbr_Fibers_OLD, nbr_Fibers_NEW, nbr_Fibers_INC
+integer(8)                              :: iii, jjj, kkk, nbr_hinges    !2018/08/31
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors, AA
 real(8), dimension(3)                  :: box_size
@@ -49,8 +50,9 @@ simParameters%IsPeriodicY =.false.
 
 open(300,file='OUTPUT/meanLength.txt')
 open(301,file='OUTPUT/OutputMessage.txt')
-open(302,file='OUTPUT/FiberLengthDistribution.txt')   !2018/08/12
-open(303,file='OUTPUT/OrientationTensor.txt')   !2018/08/12
+open(302,file='OUTPUT/FiberLengthDistribution.txt')     !2018/08/12
+open(303,file='OUTPUT/OrientationTensor.txt')           !2018/08/12
+open(304,file='OUTPUT/PositionsForTheMoment.txt')       !2018/08/31
 
 open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
@@ -105,7 +107,7 @@ write(300,*), "time(micro sec.), Fiber No., Segments No., Total Length, mean Len
                   simParameters )
 
 call fiber_regroup_minmax_hinges(   fibers, hinges )                !2018/08/05 add
-call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add
+call fiber_regroup_minmax_segments( t, fibers, hinges )                !2018/08/05 add
 call fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
 
 Inertia_Moment=(pi/4.d0)*r_fiber**4d0
@@ -129,7 +131,8 @@ nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 ­×¥
 call output_Length( t, fibers, hinges )                          !2018/08/12 ­×¥¿
 call output_LengthDistribution( t, fibers, indexA )              !2018/08/12 ¼W¥[
 call output_OrientationTensor( t, fibers, hinges, AA )           !2018/08/12 ¼W¥[
-
+!call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31  
+          
 do i=n,  nbr_intgr
  
     t = dt*i                                                     !2018/07/14 ­×¥¿
@@ -184,10 +187,11 @@ do i=n,  nbr_intgr
                                   Nbr_bins,&
                                   distanceFactor )
          
-!         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
-!         call fiber_regroup_minmax_segments( fibers, hinges )     !2018/08/05 add
-          call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 ¼W¥[
-          
+!         call fiber_regroup_minmax_hinges(   fibers, hinges )          !2018/08/05 add
+          call fiber_regroup_minmax_segments( t, fibers, hinges )       !2018/08/05 add
+          call output_OrientationTensor( t, fibers, hinges, AA )        
+          !2018/08/12 ¼W¥[
+!          call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31      
     end if
 
     nbr_Fibers_NEW= ubound(fibers,1)                                        !2018/08/12 ¼W¥[
@@ -248,8 +252,9 @@ do i=n,  nbr_intgr
     if( .NOT. simParameters%IsPeriodicY ) then
         
          !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
-         !call fiber_regroup_minmax_segments( fibers, hinges )      !2018/08/05 add
-              
+         call fiber_regroup_minmax_segments( t, fibers, hinges )    !2018/08/05 add
+         call output_OrientationTensor( t, fibers, hinges, AA )     !2018/08/12 ¼W¥[              
+         
          call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
                                           hinges,&
                                           r_fiber,&
@@ -288,7 +293,8 @@ do i=n,  nbr_intgr
  		call output_data(   t, fibers, hinges, frame, printVelocities )
         call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 ¼W¥[
         call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 ¼W¥[ 
-        
+        call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31  
+                
         if( isOutputMessage .eq. .false. ) then
             call output_Length( t, fibers, hinges )                        !2018/08/12 ­×¥¿
         end if
@@ -311,6 +317,7 @@ close(300)
 close(301)
 close(302)                     !2018/08/12
 close(303)                     !2018/08/12
+close(304)                     !2018/08/31
 
 close (3) 
 close (5)
