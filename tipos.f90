@@ -38,6 +38,9 @@ real(8)   , dimension(3)  :: T
 real(8)   , dimension(3)  :: F_excl_vol
 real(8)   , dimension(3)  :: T_excl_vol
 real(8)   , dimension(3)  :: v_i
+
+real(8)   , dimension(3)  :: v_i_old   !2019/09/05
+
 real(8)   , dimension(3)  :: omega_i
 real(8)   , dimension(3)  :: omega_fluid_sum
 real(8)   , dimension(3)  :: u_fluid_sum
@@ -60,6 +63,9 @@ logical                   :: is_separated
 logical                   :: is_segment
 integer                   :: is_stationary
 real(8)   , dimension(3)  :: omega
+
+real(8)   , dimension(3)  :: omega_old   !2019/09/05
+
 real(8)                   :: fric
 integer   , dimension(3)  :: indx
 integer                   :: ind

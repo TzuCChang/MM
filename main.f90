@@ -188,8 +188,8 @@ do i=n,  nbr_intgr
                                   distanceFactor )
          
 !         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
-          call fiber_regroup_minmax_segments( t, fibers, hinges )     !2018/08/05 add
-          call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 增加
+!         call fiber_regroup_minmax_segments( t, fibers, hinges )     !2018/08/05 add
+!         call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 增加
           !call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/09/01 因為沒有用到斷裂
     end if
 
@@ -251,8 +251,8 @@ do i=n,  nbr_intgr
     if( .NOT. simParameters%IsPeriodicY ) then
         
          !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
-         call fiber_regroup_minmax_segments( t, fibers, hinges )      !2018/08/05 add
-         call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 增加              
+!        call fiber_regroup_minmax_segments( t, fibers, hinges )      !2018/08/05 add
+!        call output_OrientationTensor( t, fibers, hinges, AA )   !2018/08/12 增加              
          
          call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
                                           hinges,&
@@ -293,6 +293,8 @@ do i=n,  nbr_intgr
         call output_LengthDistribution( t, fibers, indexA )                !2018/08/12 增加
         call output_OrientationTensor( t, fibers, hinges, AA )             !2018/08/12 增加 
         call output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)    !2018/09/01 跟writ_period一起輸出,可以在Fibers.in給定
+        
+        call fiber_regroup_minmax_segments( t, fibers, hinges )     !2018/08/05 add        
         
         if( isOutputMessage .eq. .false. ) then
             call output_Length( t, fibers, hinges )                        !2018/08/12 修正

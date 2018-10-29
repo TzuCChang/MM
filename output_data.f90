@@ -105,10 +105,10 @@ end do
 tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
 maxSegments= ubound(indexA,1)
 
-print *,"&&&", tt, ubound(fibers,1), maxSegments
+!print *,"&&&", tt, ubound(fibers,1), maxSegments
 write(302,*),  tt, ubound(fibers,1), maxSegments
 do j=1, maxSegments
-  print *, "&&&( ", j, indexA(j)
+!  print *, "&&&( ", j, indexA(j)
   write(302,*),     j, indexA(j) 
 end do
 !pause
@@ -174,6 +174,7 @@ integer(8)                               :: iii, jjj, kkk, nbr_hinges
   	        end do
         end do
         close(304)                                         !2018/09/02
+!pause
 
 end subroutine output_PositionsForTheMomemt
 

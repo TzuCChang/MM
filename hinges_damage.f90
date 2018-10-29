@@ -20,6 +20,7 @@ fac=0.07*r_fiber
 do i=1, ubound(hinges,1)
 	hinges(i)%is_broken    =.false.
 	hinges(i)%is_separated =.false.
+	hinges(i)%curv = huge(0d0)  !2018/09/05
 end do
 
 k=0
@@ -28,10 +29,14 @@ k=0
 do i=1, ubound(fibers,1)
 	if(fibers(i)%nbr_hinges.ge.3) then 
 		do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
-            
+
             call find_curvature(hinges(j-1)%X_i, hinges(j)%X_i,hinges(j+1)%X_i, curv)
+            
+            hinges(j)%curv = curv      !2018/09/05         
+            
             if (.not. isnan(curv) .and. curv.le.min_curv) then 
                 !print *, "curv", curv
+                !pause                
  				hinges(j)%is_broken = .true.		 				
 				k=k+1
 			end if
@@ -42,6 +47,8 @@ end do
 do i=1, ubound(fibers,1)
 	hinges(fibers(i)%first_hinge)%is_separated=.true.
 end do
+
+call hinges_SortOrder_curv( hinges )
 
 !PRINT *, "Monitor Hinges"
 !do i=1, ubound(hinges,1)
@@ -140,6 +147,81 @@ do i=1, ubound(hinges,1)
 end do
 
 end subroutine hinges_damage
+
+
+
+
+
+subroutine hinges_SortOrder_curv( hinges )
+
+integer(8), dimension(:),  allocatable :: indexA, indexB
+integer(8)                             :: i1, i2, i3, k1, k2, k3, mm
+
+type (rod)  , dimension(:), allocatable :: hinges
+real(8)                                :: c1, c2, c3
+
+mm= ubound(hinges,1)
+allocate( indexA( mm ) )
+allocate( indexB( mm ) )
+
+    do i1= 1, mm 
+       indexA(i1)= i1
+       indexB(i1)= i1
+    end do
+        
+    do i1= 1, mm
+        
+       c1= hinges(i1)%curv
+       k1= indexB(i1)
+       
+       i3= i1
+       k3= k1
+       c3= c1
+       
+       do i2= i1+1, mm
+           
+          k2= indexB(i2)
+          c2= hinges(i2)%curv
+          if( c3>c2 )  then
+                  i3= i2
+                  k3= k2
+                  c3= c2
+          end if
+       end do
+       
+       i2= indexA(i3 )
+       indexA(i3)= indexA(i1)
+       indexA(i1)= i2
+       
+       k2= indexB(i3)
+       indexB(i3)= indexB(i1)
+       indexB(i1)= k2
+           
+       hinges(i1)%curv= c3      
+       hinges(i3)%curv= c1       
+       !print *,"B01",i1, i3, indexA(i1), c3
+    end do
+    !pause
+
+    !print *,"@@@( minCurv", real(hinges(1)%curv,4), real(hinges(2)%curv,4)
+    do i1=1,mm
+       if( hinges(i1)%curv .lt. 0.0004 ) then
+           !print *,"B02",i1, indexB(i1), hinges(i1)%curv
+           !write(301,*),"B02",i1, indexB(i1), hinges(i1)%curv
+       end if
+    end do    
+    !pause
+    
+deallocate(indexA)
+deallocate(indexB)
+
+end subroutine  hinges_SortOrder_curv
+
+
+
+
+
+
 
 end module m_HingesDamage
 !====================================================================

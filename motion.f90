@@ -85,12 +85,20 @@ subroutine motion_matrix(fiber_hinges, r_bead)
         AB = 0
     end if
 
-    allocate(bvec(n,1))
     !allocate(xvec(n,1))
-
     !Amat=0
-    bvec=0
     !xvec=0
+    
+    allocate(bvec(n,1))   
+    bvec=0
+
+        do i=1, ubound (fiber_hinges,1)-1                      !2018/09/05  修正
+           fiber_hinges(i)%v_i_OLD= fiber_hinges(i)%v_i        !2018/09/05  修正
+        end do
+        
+        do i=1, ubound (fiber_hinges,1)-2                      !2018/09/05  修正
+           fiber_hinges(i)%omega_OLD= fiber_hinges(i)%omega    !2018/09/05  修正
+        end do    
 
     !print *, "DIMENSION OF FIBER HINGES", ubound (fiber_hinges,1)
     if ((ubound(fiber_hinges,1)-1) .LT. minSegs) then
@@ -268,6 +276,15 @@ subroutine motion_matrix(fiber_hinges, r_bead)
         end do
     end if
 
+        do i=1, ubound (fiber_hinges,1)-1                      !2018/09/05  修正
+           fiber_hinges(i)%v_i= fiber_hinges(i)%v_i_old + 0.5*(fiber_hinges(i)%v_i - fiber_hinges(i)%v_i_old)    !2018/09/05  修正
+        end do
+        
+        do i=1, ubound (fiber_hinges,1)-2                      !2018/09/05  修正
+           fiber_hinges(i)%omega= fiber_hinges(i)%omega_old + 0.5*(fiber_hinges(i)%omega - fiber_hinges(i)%omega_old)    !2018/09/05  修正
+        end do        
+    
+    
     !do j=1,ubound(bvec,1)
     !        write(*,"(e8.2)") bvec(j,1)
     !    enddo

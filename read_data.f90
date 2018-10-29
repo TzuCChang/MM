@@ -44,6 +44,8 @@ real(8), dimension(3)                  :: coord, min_coor, max_coor
 logical                                :: is_fric_wall,printVelocities,isPeriodicX,isPeriodicY,isPeriodicZ
 type(simulationParameters)             :: simParameters
 
+real(8)                                ::  FiberLength, FiberVolume, BoxVolume, VolumeFraction
+
 namelist /input/ recover_simulation,&
                  fric_coeff,&
                  is_fric_wall,&
@@ -75,6 +77,7 @@ namelist /input/ recover_simulation,&
 
     read(1,nml = input)
 	close(1)
+    
     print *,"------------------------------------------"
 	print *,"INPUT SUMMARY"
 	print *,"recover_simulation", recover_simulation
@@ -101,7 +104,34 @@ namelist /input/ recover_simulation,&
     print *,"printVelocities ", printVelocities
     print *,"distance Factor ", distanceFactor
 	print *,"------------------------------------------"
-   	close(1)
+    
+    write(301,*),"------------------------------------------"
+	write(301,*),"INPUT SUMMARY"
+	write(301,*),"recover_simulation", recover_simulation
+	write(301,*),"Fric Coeff", fric_coeff
+	write(301,*),"is_fric_wall", is_fric_wall
+    write(301,*),"E_Young", E_Young
+    write(301,*),"min_curv", min_curv
+    write(301,*),"r_fiber", r_fiber
+    write(301,*),"viscosity", viscosity
+    write(301,*),"ex_vol_const", ex_vol_const
+    write(301,*),"nbr_neighbors", nbr_neighbors
+    write(301,*),"gamma_dot", gamma_dot
+    write(301,*),"epsilon_dot", epsilon_dot
+    write(301,*),"flow_case", flow_case
+    write(301,*),"periodic_boundary", periodic_boundary
+    write(301,*),"box_size", box_size(1)
+    write(301,*),"box_size", box_size(2)
+    write(301,*),"box_size", box_size(3)    
+    write(301,*),"dt      ", dt 
+    write(301,*),"nbr_intgr       ", nbr_intgr
+    write(301,*),"writ_period     ", writ_period
+    write(301,*),"break_period    ", break_period
+    write(301,*),"allow breakage  ",allow_breakage
+    write(301,*),"printVelocities ", printVelocities
+    write(301,*),"distance Factor ", distanceFactor
+	write(301,*),"------------------------------------------"
+    
  simParameters%IsPeriodicY = isPeriodicY
     open(3, file='OUTPUT/positions.out')
 	if (recover_simulation.eqv..true.) then
@@ -164,6 +194,8 @@ namelist /input/ recover_simulation,&
     
     print *,"Total fibers   are ", nbr_fibers
     print *,"Total Segments are ", nbr_Segments_total
+    write(301,*),"Total fibers   are ", nbr_fibers
+    write(301,*),"Total Segments are ", nbr_Segments_total
     
 	allocate (hinges(nbr_hinges_total))
 
@@ -193,7 +225,32 @@ namelist /input/ recover_simulation,&
 		end do
 	end do
 	close (99)
-      
+
+        
+FiberLength= 0
+coord= 0
+do i= 1, ubound (fibers,1)  
+do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+   coord= hinges(j+1)%X_i-hinges(j)%X_i
+   FiberLength= FiberLength + sqrt( dot_product(coord,coord) )
+end do
+end do        
+ 
+
+        FiberVolume= 3.14159*r_fiber*r_fiber*FiberLength
+        BoxVolume=   box_size(1)*box_size(2)*box_size(3)
+        VolumeFraction= FiberVolume/BoxVolume
+        
+        print *,"@@@( FiberLength=    ",FiberLength
+        print *,"@@@( FiberVolume=    ",FiberVolume
+        print *,"@@@( BoxVolume=      ",BoxVolume
+        print *,"@@@( VolumeFraction= ",VolumeFraction
+        
+        write(301,*),"@@@( FiberLength=    ",FiberLength
+        write(301,*),"@@@( FiberVolume=    ",FiberVolume
+        write(301,*),"@@@( BoxVolume=      ",BoxVolume
+        write(301,*),"@@@( VolumeFraction= ",VolumeFraction
+        
 	!do i=1, nbr_fibers
 	!	print*,"Fiber Info:", fibers(i)%first_hinge,fibers(i)%nbr_hinges
 	!end do
@@ -203,7 +260,8 @@ namelist /input/ recover_simulation,&
 	!end do
 	!print *,"FRAME", frame
     print *, "periodic_boundary    ", periodic_boundary
-    
+    write(301,*),"periodic_boundary    ", periodic_boundary
+!pause    
 
 end subroutine read_data
                      
