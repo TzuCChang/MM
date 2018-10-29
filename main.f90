@@ -12,6 +12,7 @@ use m_HingesDamage   !2018/07/21  change name
 use m_BendingTorque  !2018/07/21  change name
 use m_Motion         !2018/07/21  change name
 use m_UpDate         !2018/07/21  change name
+use m_ExclVolForces  !2018/08/01  add   
 use m_SimulationParameter  !2018/07/21  change name
 
 use omp_lib
@@ -99,23 +100,23 @@ else
 end if
 start = OMP_get_wtime()
 
-call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 revised phrase
+call simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParameters ) !2018/07/15 修正字串
 
 i= 0 
-t= 0.d0                                                          !2018/07/14 add
-nbr_Fibers_INC= 1                                                !2018/07/14 苞orrected
-nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 限corrected
+t= 0.d0                                                          !2018/07/14 增加
+nbr_Fibers_INC= 1                                                !2018/07/14 修正
+nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 修正
 
-nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 限corrected
+nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 修正
 
 
-print *, "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD            !2018/07/14 add
+print *, "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD            !2018/07/14 增加
 
-call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 add
+call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 增加
 
 do i=n,  nbr_intgr
  
-    t = dt*i                                                    !2018/07/14 限corrected
+    t = dt*i                                                    !2018/07/14 修正
 
     !print *,"A t= ", t, i
 
@@ -202,32 +203,32 @@ do i=n,  nbr_intgr
 	!end do
 	
     !call cpu_time(start)
- 	call excl_vol_forces_moments_total( fibers,&
-                                        hinges,&
-                                        ghost_segments,&
-                                        r_fiber,&
-                                        ex_vol_const,&
-                                        nbr_neighbors,&
-                                        neighbor_list,&
-                                        distance_neighbors,&
-                                        fric_coeff,&
-                                        box_size,&
-                                        distanceFactor,&
-                                        gamma_dot,&
-                                        t )
+ 	call excl_VolForceMomentsTotal( fibers,&
+                                    hinges,&
+                                    ghost_segments,&
+                                    r_fiber,&
+                                    ex_vol_const,&
+                                    nbr_neighbors,&
+                                    neighbor_list,&
+                                    distance_neighbors,&
+                                    fric_coeff,&
+                                    box_size,&
+                                    distanceFactor,&
+                                    gamma_dot,&
+                                    t )
     !call cpu_time(finish)
     !print *, "Interactions", finish-start
     !call cpu_time(start)
     
-    if(.NOT. simParameters%IsPeriodicY ) then
-    call excl_vol_forces_moments_walls2( fibers,&    !2018/07/21 change name
-                                         hinges,&
-                                         r_fiber,&
-                                         ex_vol_const,&
-                                         box_size,&
-                                         fric_coeff,&
-                                         is_fric_wall,&
-                                         gamma_dot )  
+    if( .NOT. simParameters%IsPeriodicY ) then
+    call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
+                                     hinges,&
+                                     r_fiber,&
+                                     ex_vol_const,&
+                                     box_size,&
+                                     fric_coeff,&
+                                     is_fric_wall,&
+                                     gamma_dot )  
     end if
     
     !call cpu_time(finish)
@@ -257,11 +258,11 @@ do i=n,  nbr_intgr
  		call output_data(t, fibers, hinges, frame,printVelocities)
  		frame=frame+1
     else 
-        nbr_Fibers_NEW= ubound(fibers,1)                                         !2018/07/14 add
-        if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD+nbr_Fibers_INC) ) then          !2018/07/14 苔dd
-              print *, "@@@@@( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD              !2018/07/14 苔dd
-              call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 add   
-              nbr_Fibers_OLD= nbr_Fibers_NEW                                     !2018/07/14 add 
+        nbr_Fibers_NEW= ubound(fibers,1)                                         !2018/07/14 增加
+        if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD+nbr_Fibers_INC) ) then          !2018/07/14 增加
+              print *, "@@@@@( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD              !2018/07/14 增加
+              call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 增加   
+              nbr_Fibers_OLD= nbr_Fibers_NEW                                     !2018/07/14 增加 
         end if
     end if
     

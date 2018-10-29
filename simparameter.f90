@@ -6,7 +6,7 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParams )  !2018/07/15 ­revise phrase
+subroutine simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParams )  !2018/07/15 ­×¥¿¦r¦ê
 
 type (rod)             :: hinge1, hinge2
 real(8), dimension(3)  :: r, middle_position, vel, omega, d
@@ -65,7 +65,7 @@ do i=1,3
     enddo
 enddo
 
-end subroutine simulation_parameter   !2018/07/21 ­revise phrase
+end subroutine simulation_parameter   !2018/07/21 ­×¥¿¦r¦ê
 
 
 end module m_SimulationParameter        !2018/07/21 change name

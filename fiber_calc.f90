@@ -121,9 +121,9 @@ d = hinge1%r/hinge1%length
 
 middle_position= (hinge1%X_i+hinge2%X_i)/2d0
 
-call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !2018/07/14 changed
+call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !§ó´« 2018/07/14
 
-!call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !2018/07/14 add
+!call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !·s¼W 2018/07/14
 
 hinge1%u_oo =    vel
 hinge1%omega_oo= omega

@@ -72,11 +72,11 @@ end subroutine Partition
 
 !*===================================================================
  
-subroutine fiber_regroup( fibers,&              !2018/07/21 change name
+subroutine fiber_regroup( fibers,&                   !2018/07/21 change name
                           hinges,&
                           ghost_segments,&
-                          E_Young,&             !ERROR 2018/07/07
-                          Inertia_Moment,&      !ERROR 2018/07/07
+                          E_Young,&          !ERROR 2018/07/07
+                          Inertia_Moment,&   !ERROR 2018/07/07
                           allow_breakage,&
                           min_curv,&
                           r_fiber,&
@@ -86,8 +86,8 @@ subroutine fiber_regroup( fibers,&              !2018/07/21 change name
                           neighbor_list,&
                           distance_neighbors,&
                           gamma_dot,&
-                          t,&                   !2018/07/21  time change to t
-                          Nbr_bins,&            !2018/07/21  add
+                          t,&                     !2018/07/21  time change to t
+                          Nbr_bins,&              !2018/07/21  add
                           distanceFactor, &
                           simParameters )
 
@@ -247,13 +247,10 @@ do i=1, ubound(fibers,1)
         
         end if
       
-        
-        
         k=k+numClones ! change 5 to 9
     end do
 end do
 
-!print *,"set 4"
 min_coor=huge(0d0)
 max_coor=-huge(0d0)
 max_length=0
@@ -263,11 +260,7 @@ do i=1, ubound(fibers,1)
         max_length=max(max_length,sqrt(dot_product((hinges(j+1)%X_i-hinges(j)%X_i),(hinges(j+1)%X_i-hinges(j)%X_i))))  
     end do
 end do
-!call cpu_time(finish2)
-!print *,"Long chunck", finish2-start2
-!print *,"set 5"
-!print *,"Max_lenght",max_length
-!call cpu_time(start2)
+
 do k=1,3
     do i=1, ubound(ghost_segments,1)
         min_coor(k)=min(min_coor(k), ghost_segments(i)%A(k))
@@ -275,47 +268,27 @@ do k=1,3
 	    max_coor(k)=max(max_coor(k), ghost_segments(i)%A(k))
 	    max_coor(k)=max(max_coor(k), ghost_segments(i)%B(k))
 	end do  
-end do
-!call cpu_time(finish2)
-!print *, "Find Minumum and Maximum", finish2-start2
-!print *,"Max Coor", max_coor(1), max_coor(2), max_coor(3)
-!print *,"Min Coor", min_coor(1), max_coor(2), max_coor(3)
-!print *,"set 6"	    
-
+end do 
 
 !bin_length=1.25*(max_length+2*r_fiber)!Mod 9/28/2014
+
 bin_length=1.5*(max_length+2*r_fiber)
-!min_coor= min_coor- 2*r_fiber
-!max_coor= max_coor+ 2*r_fiber
 
 min_coor= min_coor- 2*r_fiber-max_length
 max_coor= max_coor+ 2*r_fiber+max_length
 
-Nbr_bins=ceiling((max_coor-min_coor)/bin_length)
+Nbr_bins= ceiling((max_coor-min_coor)/bin_length)
 
-!bin_length=(max_coor(3)-min_coor(3))/Nbr_bins(3)
-!min_coor=min_coor-bin_length
-!max_coor=min_coor+bin_length!Mod 9/28/2014
+min_coor= min_coor-2*bin_length
+max_coor= max_coor+2*bin_length
 
-!Nbr_bins=Nbr_bins+2
-
-min_coor=min_coor-2*bin_length
-max_coor=max_coor+2*bin_length
-
-Nbr_bins=Nbr_bins+4
-
-!print *,"Nbr bins", Nbr_bins
-!print *,"set 7"
+Nbr_bins= Nbr_bins+4
 
 do j=1,ubound(hinges,1)
     do k=1,3
         hinges(j)%indx(k)=0
     end do
 end do   
-
-!print *, "set 8"
-!m=1
-!call cpu_time(start2)
 
 do i=1, ubound(fibers,1)
     do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
@@ -325,17 +298,12 @@ do i=1, ubound(fibers,1)
             if(indx(k).le.2) indx(k)=2
             if(indx(k).ge.(Nbr_bins(k)-1)) indx(k)=Nbr_bins(k)-1
 	    end do
-	    !print *, "indx", indx
-    	!print *,"ind", indx
+
 	    hinges(j)%ind=(indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1)
-	    !print *,"hinges(j)%indx", hinges(j)%ind
-	   ! m=m+1
+
     end do
 end do
-!call cpu_time(finish2)
-!print *, "Clasify hinges", finish2-start2
 
-!print *, "set 9"
 m=1
 
 do j=1, ubound(ghost_segments, 1)
@@ -347,23 +315,10 @@ do j=1, ubound(ghost_segments, 1)
     end do
     
 	ghost_segment_index(m)=(indx(3)-1)*Nbr_bins(1)*Nbr_bins(2)+(indx(2)-1)*Nbr_bins(1)+indx(1)
-	!print *, "ind", indx
-	!print *, "ghost_segment index", ghost_segment_index(m)
 	m=m+1
 end do
 
-!print *, "set 10"
-!call cpu_time(start2)
-
 call QsortC(ghost_segment_index , ghost_segments)
-
-!call cpu_time(finish2)
-!print *, "quick sort", finish2-start2
-!do j=1,ubound(ghost_segment_index,1 )
-!    print *,"Sorted Ghost Segment Index", ghost_segment_index(j)
-!end do
-!stop
-!print *, "set 11"
 
 if (allocated(cells)) deallocate(cells)
 
@@ -374,7 +329,6 @@ do i=1, ubound(cells,1)
     cells(i)%ghost_limits(2)=0
 end do
 
-!print *, "set 11a"
 
 do i=1, Nbr_bins(1)
     do j=1, Nbr_bins(2)
@@ -387,12 +341,8 @@ do i=1, Nbr_bins(1)
     end do
 end do
 
-!print *, "set 12a"
-!print *, "ghost_segment_index(1)", ghost_segment_index(1)
+
 cells(ghost_segment_index(1))%ghost_limits(1)=1
-!print *, "ghost_segment_index(1)", ghost_segment_index(1)
-!print *, "set 12b"
-!call cpu_time(start2)
 
 do j=2, ubound(ghost_segment_index,1)
     if (ghost_segment_index(j) .ne. ghost_segment_index(j-1)) then
@@ -400,24 +350,6 @@ do j=2, ubound(ghost_segment_index,1)
         cells(ghost_segment_index(j-1))%ghost_limits(2)=j-1
     end if
 end do
-
-!call cpu_time(finish2)
-!print *,"Find Limits", finish2-start2
-!do j=1, ubound(cells,1)
-!
-!    print *,"Cells Ghost Limits",cells(j)%ghost_limits(1), cells(j)%ghost_limits(2)
-!
-!end do
-!stop
-!print *, "set 13"
-!-----------------------------------------------------------------------------
-!call cpu_time(start2)
-
-
-!call cpu_time(finish2)
-!print *,"Internal Find Neighbors", finish2-start2
-!call cpu_time(finish3)
-!print *, "Time hinges_break_config_measured inside", finish3-start3
 
 end subroutine fiber_regroup  
                                                                  

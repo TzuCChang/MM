@@ -47,7 +47,9 @@ logical               ::are_boxes_intersect
 real(8), dimension(3) ::hinge_pt1, hinge_pt2,segment_pt1, segment_pt2 
 type(bound_box)       ::a, b
 real(8)               :: radius, margin
+
 are_boxes_intersect=.false.
+
 a.X=(hinge_pt1+hinge_pt2)/2
 a.W=abs(hinge_pt1-hinge_pt2)+2*radius+margin
 
@@ -167,61 +169,57 @@ subroutine dist_segments( p1,&
                           Gab_norm )
 
 real(8), dimension(3):: p1, q1, p2, q2, d1, d2, Gab, r, c1, c2
-real(8)              ::Gab_norm, epsilon, s, t
-real(8)              ::a, e, f, c, b, denom
+real(8)              :: Gab_norm, epsilon, s, t
+real(8)              :: a, e, f, c, b, denom
 logical              :: coll_course
 
-epsilon  =1D-40
+epsilon= 1D-40
 
-d1=q1-p1
-d2=q2-p2
+d1= q1 - p1
+d2= q2 - p2
 
-r = p1 - p2
+r= p1 - p2
 
-a = dot_product(d1,d1)
-e = dot_product(d2,d2)
-f = dot_product(d2,r)
+a= dot_product( d1, d1 )
+e= dot_product( d2, d2 )
+f= dot_product( d2, r  )
 
-if ((a<=epsilon) .and. (e<=epsilon)  ) then
+if( (a<=epsilon) .and. (e<=epsilon) ) then
     s = 0.0D0
     t = 0.0D0
-    
-    c1 = p1
-    c2 = p2
-    
-    Gab_norm = sqrt(dot_product(c1 - c2, c1 - c2))
-    Gab =  (c1 - c2)
+   
+    Gab_norm= sqrt( dot_product(r,r) )
+    Gab= r
     return
 end if
     
-if ( a<= epsilon ) then
-    s = 0D0
-    t = f/e
-    t = clamp(t, 0.0D0, 1.0D0)    
+if( a <= epsilon ) then
+    s= 0D0
+    t= clamp( f/e, 0.0D0, 1.0D0 )    
 else
-    c = dot_product(d1,r)
+    c= dot_product( d1, r )
     
-    if(e <= epsilon)then
-        t= 0.0D0
-        s = clamp(-c /a, 0.0D0, 1.0D0)
+    if( e <= epsilon )then
+        s= clamp( -c/a, 0.0D0, 1.0D0 )
+        t= 0.D0
     else
-        b = dot_product(d1, d2)
-        denom = a*e-b*b
+        b= dot_product( d1, d2 )
+        denom= a*e-b*b
         
-        if(denom /=	0.0D0 ) then
-            s = clamp((b*f -c*e) / denom  , 0.0D0, 1.0D0) 
+        if( denom /= 0.0D0 ) then
+            s= clamp( (b*f-c*e)/denom, 0.0D0, 1.0D0 ) 
         else
-         s =0.0D0
+            s= 0.0D0
         end if
         
-        t =(b*s +f) / e
+        t= (b*s+f)/e
         
-        if (t < 0D0) then
-            t = 0.0D0
-            s =clamp(-c / a, 0.0D0 , 1.0D0)
-        else if ( t> 1.0) then
+        if( t < 0D0 ) then
+            t= 0.0D0
+            s= clamp(-c/a, 0.0D0, 1.0D0 )
+        else if ( t> 1.0 ) then
             t= 1.0D0
-            s =clamp((b-c)/a, 0.0D0, 1.0D0)
+            s= clamp( (b-c)/a, 0.0D0, 1.0D0 )
        end if
    end if
     
@@ -240,8 +238,8 @@ end if
    !print *, "d2 " , d2 
    !print *, " "
    
-    Gab_norm = sqrt(dot_product(c1 - c2, c1 - c2))
-    Gab =  (c1 - c2)
+    Gab_norm = sqrt(dot_product(c1-c2, c1-c2))
+    Gab=  (c1 - c2)
 
 end subroutine dist_segments
        
