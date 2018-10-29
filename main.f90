@@ -1,7 +1,6 @@
 !Units in SI (m, N, Pa, etc)
 program cube_periodic
 
-!!¬°¦ó«e­±­n¥[m??
 use m_DataStructures
 
 use m_ReadData       !2018/07/21  change name
@@ -103,7 +102,7 @@ open(3,file='OUTPUT/positions.out')
 open(5,file='OUTPUT/vels.out')
 open(6,file='OUTPUT/forces.out')
 
-Inertia_Moment=(pi/4.d0)*r_fiber**4d0   ! Inertia_Moment»P­pºâªº´X¦ó¦³Ãö
+Inertia_Moment=(pi/4.d0)*r_fiber**4d0
 
 if(recover_simulation.eqv..true.) then 
 	n=frame*writ_period+1
@@ -123,13 +122,13 @@ nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 ­×¥
 nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 ­×¥¿
 
 print *, "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD            !2018/07/14 ¼W¥[
-write(301,*), "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD       !2018/08/05 ¼W¥[
+write(301,*), "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD    !2018/08/05 ¼W¥[
 
 call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 ¼W¥[
 
 do i=n,  nbr_intgr
  
-    t = dt*i                                                     !2018/07/14 ­×¥¿
+    t = dt*i                                                    !2018/07/14 ­×¥¿
 
     !print *,"A t= ", t, i
 
@@ -281,7 +280,7 @@ do i=n,  nbr_intgr
         nbr_Fibers_NEW= ubound(fibers,1)                                         !2018/07/14 ¼W¥[
         if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD+nbr_Fibers_INC) ) then          !2018/07/14 ¼W¥[
               print *, "@@@@@( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD              !2018/07/14 ¼W¥[
-              call output_Length( t, fibers, hinges, frame, printVelocities )    !2018/07/14 ¼W¥[   
+              call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 ¼W¥[   
               nbr_Fibers_OLD= nbr_Fibers_NEW                                     !2018/07/14 ¼W¥[ 
         end if
     end if

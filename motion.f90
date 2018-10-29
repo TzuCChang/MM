@@ -1,11 +1,5 @@
 module m_Motion
     
-!subroutine: motion_fiber
-!subroutine: copyToBanded
-!subroutine: motion_matrix
-!subroutine: mini_mat
-!subroutine: mini_mat_tensor
-    
     use m_DataStructures
     use MATRIX_SOLVERS
     use omp_lib

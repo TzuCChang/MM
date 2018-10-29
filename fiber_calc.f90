@@ -1,13 +1,6 @@
 !====================================================================
 module m_FiberCalc
-
-!原本屬於segment_prop_calc.f90
-
-!subroutine: fiber_calc_tensor
-!subroutine: fiber_calc
-!subroutine: fiber_calc_tensor_hinge
-!subroutine: fiber_calc_hinge
-
+    
 use m_DataStructures
 use m_UtilityLib
 
@@ -16,7 +9,7 @@ use m_SetVelocity !2018/07/22 add
 implicit none
 contains
 
-subroutine fiber_calc_tensor( fibers,&  !2018/07/21 change name (原本subroutine名字叫: fiber_par_calc_Tensor)
+subroutine fiber_calc_tensor( fibers,&  !2018/07/21 change name
                               hinges,&
                               r_fiber,&
                               viscosity,&
@@ -36,7 +29,7 @@ type(simulationParameters)  :: simParameters
 !$OMP DO !SCHEDULE(DYNAMIC) ! all of tehm should be shared by default anyway
 
 do i=1, ubound(fibers,1)
-    first=fibers(i)%first_hinge !這裡first和last是否要改名??
+    first=fibers(i)%first_hinge
 	last =fibers(i)%first_hinge+fibers(i)%nbr_hinges-2 !Changed JULY 31 2012
     
 	do j=first, last
@@ -58,7 +51,7 @@ end do
 end subroutine fiber_calc_tensor   !2018/07/21 change name
                           
 !====================================================================                          
-subroutine fiber_calc( fibers,&   !2018/07/21 change name (原本subroutine名字叫: fiber_par_calc)
+subroutine fiber_calc( fibers,&   !2018/07/21 change name
                        hinges,&
                        r_fiber,&
                        viscosity,&
@@ -96,7 +89,7 @@ end do
 end subroutine fiber_calc   !2018/07/21 change name
                           
 !====================================================================
-subroutine fiber_calc_tensor_hinge( hinge1,&    !2018/07/21 change name  (原本subroutine名字叫: hinge_par_calc_tensor)
+subroutine fiber_calc_tensor_hinge( hinge1,&    !2018/07/21 change name
                                     hinge2,&
                                     r_fiber,&
                                     viscosity,&
@@ -116,7 +109,7 @@ real(8)                :: r_fiber, viscosity, gamma_dot, epsilon_dot, segment_le
 real(8), parameter     :: pi=3.141592
 type(simulationParameters)  :: simParameters
 
-hinge1%A =0 !from ch3
+hinge1%A =0
 hinge1%H =0
 hinge1%C =0
 
@@ -201,7 +194,7 @@ hinge1%T=0
 end subroutine fiber_calc_tensor_hinge   !2018/07/21 change name
 
 !====================================================================
-subroutine fiber_calc_hinge( hinge1,&     !2018/07/21 change name  (原本subroutine名字叫: hinge_par_calc)
+subroutine fiber_calc_hinge( hinge1,&     !2018/07/21 change name
                              hinge2,&
                              r_fiber,&
                              viscosity,&
