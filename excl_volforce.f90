@@ -1,6 +1,11 @@
 !====================================================================
 module m_ExclVolForces  !2018/08/01  change name
-    
+
+!subroutine: excl_VolForceMomentsTotal  - fiber and fiber  interaction
+!subroutine: excl_VolForceMomentsWalls2 - fiber and surrounding interaction
+!subroutine: excl_VolForceSegments      - intra-fiber forces 
+!subroutine: excl_VolGhostSegments
+
 use m_DataStructures
 use m_UtilityLib
 
@@ -25,7 +30,7 @@ subroutine excl_VolForceMomentsTotal( fibers,&   !2018/08/03  修正  is_for_neigh
 logical                                 :: flag
 type(fiber), dimension(:)               :: fibers
 type(rod),   dimension(:)               :: hinges
-type(rod)                               :: ghost_hingeA, ghost_hingeB
+type(rod)                               :: ghost_hingeA, ghost_hingeB, ghost_hingeC, ghost_hingeD
 type(segment), dimension(:), allocatable   :: ghost_segments
 
 integer(8)                              :: i, j, k, m, j1, j2, nbr_neighbors   !2018/08/04  add
@@ -35,16 +40,16 @@ real(8), dimension(3)                   :: box_size, Gab
 real(8)                                 :: gamma_dot, viscosity, ex_vol_const, distanceFactor
 real(8)                                 :: r_fiber, s, t, Gab_min, fric_coeff, time, dX, threshold
 
-threshold= 2*r_fiber !兩個纖維最近的距離
+threshold= 2*r_fiber !兩個纖維能夠靠近最近的距離
 
 dX= mod( gamma_dot*box_size(2)/2*time, box_size(1) )
-
+! mod(a,b) = Remainder function of a/b
 call excl_VolGhostSegments( hinges, ghost_segments, box_size, dX )
 
 do i=1, ubound( fibers, 1 )
 	do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         
-		m= 0
+		m= 0    !m=什麼??
 		flag= .true.
         
 		do while ( flag.eqv..true. )
@@ -53,17 +58,17 @@ do i=1, ubound( fibers, 1 )
 
 			k= neighbor_list(j,m)   !2018/08/04  將 l 改成 k
             
-			if( k .ne. 0 ) then
+			if( k .ne. 0 ) then !.ne.= /=
                 
-                j1= ghost_segments(k)%orig_pos(1)   !2018/08/04  add ghost_segment繼承j1 j2 
-                j2= ghost_segments(k)%orig_pos(2)   !2018/08/04  add
+                j1= ghost_segments(k)%orig_pos(1)   !2018/08/04  add ghost_segment繼承j1
+                j2= ghost_segments(k)%orig_pos(2)   !2018/08/04  add ghost_segment繼承j2
                 
                 ghost_hingeA= hinges(j1)            !2018/08/04  add  複製 (j1) ghost_hingeA繼承給hinge(j1) 因為ghost_segment(k)為頭尾兩端
                 ghost_hingeB= hinges(j2)            !2018/08/04  add  複製 (j2)
                 
 			    ghost_hingeA%X_i= ghost_segments(k)%A  !2018/08/04 因為前面 call excl_VolGhostSegments(hinges,ghost_segments,box_size,dX)
 			    ghost_hingeB%X_i= ghost_segments(k)%B  !2018/08/04 目的是將其他周圍和本身的cell共9個納進來計算,同時每個 ghost的位置不一樣
-                
+               
 !print *,"k,j1,j2 ",k,j1,j2                
 !print *,"A ", ghost_hingeA%is_stationary
 !print *,"A ", ghost_hingeA%X_i
@@ -74,12 +79,23 @@ do i=1, ubound( fibers, 1 )
 !print *,"B ", ghost_hingeB%X_i
 !print *,"B ", ghost_hingeB%v_i
 !print *,"B ", ghost_hingeB%omega              
+
+!print *,"C ", ghost_hingeC%is_stationary
+!print *,"C ", ghost_hingeC%X_i
+!print *,"C ", ghost_hingeC%v_i
+!print *,"C ", ghost_hingeC%omega
+
+!print *,"D ", ghost_hingeD%is_stationary
+!print *,"D ", ghost_hingeD%X_i
+!print *,"D ", ghost_hingeD%v_i
+!print *,"D ", ghost_hingeD%omega
 !pause
+
 
 				call dist_segments( ghost_hingeA%X_i,&
 	                                ghost_hingeB%X_i,&
-	                                hinges(j)%X_i   ,&
-	                                hinges(j+1)%X_i ,&
+	                                hinges(j  )%X_i,&
+	                                hinges(j+1)%X_i,&
                                     s,&
                                     t,&
                                     Gab,&
@@ -100,8 +116,8 @@ do i=1, ubound( fibers, 1 )
 !contact force>> 利用excl_volforcesegment計算contact force, neighbor ghost進來比
 				     call excl_VolForceSegments( ghost_hingeA,&                !2018/08/04  add
                                                  ghost_hingeB,&                !2018/08/04  add
-								                 hinges(j)   ,&
-                                                 hinges(j+1) ,&
+								                 hinges(j  ),&
+                                                 hinges(j+1),&
 							                     ex_vol_const,&
                                                  r_fiber,&
                                                  s,&
@@ -121,7 +137,7 @@ end do
 
 end subroutine excl_VolForceMomentsTotal
 
-!纖維與牆壁之間的作用力, 有在main呼叫 (main裡呼叫total跟wall)                                       
+!纖維與牆壁之間的作用力, 有在main呼叫 (main裡呼叫total跟wall2)                                          
 subroutine excl_VolForceMomentsWalls2( fibers,&    !2018/08/01 change name
                                        hinges,&
                                        r_fiber,&
@@ -134,26 +150,31 @@ integer                  :: i, j, k
 type(fiber), dimension(:):: fibers
 type(rod), dimension(:)  :: hinges
 real(8)                  :: ex_vol_const, dist, r_fiber, vec_to_wall, threshold
-real(8), dimension(3)    :: box_size, Exc_Vol_Force_Partial, r, v_rel
+real(8), dimension(3)    :: box_size, Exc_Vol_Force_Partial, r, v_rel, X_fiber
 real(8), dimension(2)    :: wall_position
 real(8)                  :: FAC, gamma_dot
 logical                  :: is_fric_wall
 real(8)                  :: fric_coeff
 
-threshold= 1*r_fiber !因為此為計算牆壁 所以距離為半徑
-!這邊需先加一個y的質量中心(y_c)
-wall_position(1)=  box_size(2)/2
-wall_position(2)= -box_size(2)/2  !wall_position(1) !y軸座標在box正負之間 但沒有定義box center>>需先找到全部纖維的質量中心(x y z分別加起來除以纖維數)
+!2018/08/05  Compute center of mass for all fibers X_fiber
+k= 0
+X_fiber= 0
+do i= 1, ubound (fibers,1)  
+    do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+        X_fiber= X_fiber + ((hinges(j)%X_i+hinges(j+1)%X_i)/2d0)
+        k= k+1
+    end do
+end do        
+X_fiber= X_fiber/real(k)  !2018/08/05  X_fiber= center of mass
 
-!print *,"@@@( Box_size(2)= ",box_size(2)
-!print *,"@@@( wall(1)=     ",wall_position(1)
-!print *,"@@@( wall(2)=     ",wall_position(2)
-!pause
+threshold= 1*r_fiber
+wall_position(1)= X_fiber(2) + box_size(2)/2
+wall_position(2)= X_fiber(2) - box_size(2)/2  !wall_position(1)
 
 do k= 1,2
     !if (k.eq.1) then
-    if (k.eq.2) then
-        FAC= +1;
+    if( k .eq. 2 ) then
+        FAC= +1;    !此處的FAC跟hinge_damage.f90的fac有什麼關聯?
     else
         FAC= -1;
     endif
@@ -164,9 +185,9 @@ do k= 1,2
         
         Exc_Vol_Force_Partial= 0;
         
-        vec_to_wall= hinges(j)%X_i(2) - wall_position(k)  !error 2018/08/04 計算hinges到Wall的距離,這是錯誤的,
+        vec_to_wall= hinges(j)%X_i(2) - wall_position(k)  !error 2018/08/04 hinges到Wall的距離,這是錯誤的,
         
-        dist= abs(vec_to_wall)   !2018/08/04 error 2018/08/04 hinges到Wall距離的算法是錯誤的 !取絕對值 為長度
+        dist= abs(vec_to_wall)   !2018/08/04 error 2018/08/04 hinges到Wall距離的算法是錯誤的,
                                  !2018/08/04 除非輸入的所有fibers或hinges的y座標,全部定在-box_size(2)/2和+box_size(2)/2之間才適用
                                  !2018/08/04 box下方,因為wall_position(2)= -box_size(2)/2= -2e-4, 因此當k=2時, dist永遠大於threshold=5e-6,2.都不會碰到Wall
 !print *,"@@@( k= ",k
@@ -300,7 +321,7 @@ real(8), parameter      :: pi=3.141592
     
     fac= ex_vol_const*2*r_fiber
     
-    Exc_Vol_Force_Partial= -(Gab/(Gab_min))*fac*exp(-2*(Gab_min/r_fiber-2))  !!對照公式, 兩個纖維最近的距離dij
+    Exc_Vol_Force_Partial= -(Gab/(Gab_min))*fac*exp(-2*(Gab_min/r_fiber-2))
 
 !print *,"a1s", hingesa1%is_stationary
 !print *,"a1X", hingesa1%X_i
@@ -323,7 +344,7 @@ real(8), parameter      :: pi=3.141592
     
 	if( hingesb1%is_stationary==1 ) hingesb1%v_i= 0
 	if( hingesa1%is_stationary==1 ) hingesa1%v_i= 0  !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有is_stationary資訊
-	!v_rel=兩個相減為相對速度和旋轉相對速度的差
+	!v_rel=兩個相減為相對速度和旋轉相對速度的差	
     v_rel= -hingesb1%v_i + hingesa1%v_i - cross(hingesb1%omega,r2*t)&
                                         + cross(hingesa1%omega,r1*s)    !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有omega資訊
 !print *,"vel",v_rel
@@ -339,7 +360,7 @@ real(8), parameter      :: pi=3.141592
 
     Exc_Vol_Force_Partial= Exc_Vol_Force_Partial + v_rel*abs(fric_coeff*Exc_Vol_Force_Partial) !2018/08/04 拿掉 if 判斷 !得到force(正向力)
     
-    hingesb1%F_Excl_Vol= hingesb1%F_Excl_Vol + Exc_Vol_Force_Partial !2018/08/04 修正 !force存到b1裡面
+    hingesb1%F_Excl_Vol= hingesb1%F_Excl_Vol + Exc_Vol_Force_Partial !2018/08/04 修正
     
 #ifdef TENSOR    
     void= cross( (r2*t -r2/2 ), Exc_Vol_Force_Partial )
@@ -347,7 +368,7 @@ real(8), parameter      :: pi=3.141592
     void= cross( (r2*t       ), Exc_Vol_Force_Partial )
 #endif
 
-    hingesb1%T_Excl_Vol= hingesb1%T_Excl_Vol + void                  !2018/08/04 修正  拿掉 if 判斷 !T為torque 前面為在切線方向作用力(作用力方向), 後面為momemt作用力(力矩會旋轉)>t是前面計算出來,是相對位置(bending的torque)
+    hingesb1%T_Excl_Vol= hingesb1%T_Excl_Vol + void                  !2018/08/04 修正
 
     !print *, "collision happened 2"
       
@@ -359,62 +380,104 @@ subroutine excl_VolGhostSegments( hinges, ghost_segments, box_size, dX )
 type(rod),     dimension(:)              :: hinges
 type(segment), dimension(:), allocatable :: ghost_segments
 
-integer(8)                               :: i, j,k, l, m
+integer(8)                               :: i, j, k
 real(8)                                  :: dX
 real(8),dimension(3)                     :: box_size
 
 !$OMP PARALLEL DEFAULT(SHARED) 
 !$OMP DO PRIVATE (i, j, k)
 
-do i=1, ubound( ghost_segments, 1 ) !從第一個segment做到最後一個segment
-!print *,"i", i   ," of ",   ubound(ghost_segments,1)
-    j= ghost_segments(i)%orig_pos(1) !首
-    k= ghost_segments(i)%orig_pos(2) !尾
+do i= 1, ubound( ghost_segments, 1 ) !從第一個segment做到最後一個segment
+   j= ghost_segments(i)%orig_pos(1) !首
+   k= ghost_segments(i)%orig_pos(2) !尾
 
-    select case (ghost_segments(i)%axis_loc)
-        case(1) ! image +X !本身box 最原始的, k=j+1
-            ghost_segments(i)%A= hinges(j)%X_i
-            ghost_segments(i)%B= hinges(k)%X_i
-        case(2) ! image +X
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)+box_size(1)
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)+box_size(1)
-        case(3) ! image -X
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)-box_size(1)
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)-box_size(1)
-        case(4) ! image +Z
-            ghost_segments(i)%A(3)= hinges(j)%X_i(3)+box_size(3)
-            ghost_segments(i)%B(3)= hinges(k)%X_i(3)+box_size(3)
-        case(5) ! image -Z
-            ghost_segments(i)%A(3)= hinges(j)%X_i(3)-box_size(3)
-            ghost_segments(i)%B(3)= hinges(k)%X_i(3)-box_size(3)
-        case(6) ! image +Ya
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)+dX
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)+dX
-            ghost_segments(i)%A(2)= hinges(j)%X_i(2)+box_size(2)
-            ghost_segments(i)%B(2)= hinges(k)%X_i(2)+box_size(2)
-        case(7) ! image +Yb
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)+dX - box_size(1)
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)+dX - box_size(1)
-            ghost_segments(i)%A(2)= hinges(j)%X_i(2)+box_size(2)
-            ghost_segments(i)%B(2)= hinges(k)%X_i(2)+box_size(2)
-        case(8) ! image -Ya
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)-dX
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)-dX
-            ghost_segments(i)%A(2)= hinges(j)%X_i(2)-box_size(2)
-            ghost_segments(i)%B(2)= hinges(k)%X_i(2)-box_size(2)
-        case(9) ! image -Yb
-            ghost_segments(i)%A(1)= hinges(j)%X_i(1)- dX + box_size(1)
-            ghost_segments(i)%B(1)= hinges(k)%X_i(1)- dX + box_size(1)
-            ghost_segments(i)%A(2)= hinges(j)%X_i(2)-box_size(2)
-            ghost_segments(i)%B(2)= hinges(k)%X_i(2)-box_size(2)    
+   select case ( ghost_segments(i)%axis_loc )
             
-        end select
+        !This is the original segment
+        case(1)  !2018/08/05  changet
+        ghost_segments(i)%A= hinges(j)%X_i
+        ghost_segments(i)%B= hinges(k)%X_i
+
+        !Image segment in +x
+        case(2)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) + box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) + box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3)
+        
+        ! Image segment in -x
+        case(3)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) - box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) - box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3)
+
+        ! Image segment in +z
+        case(4)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) + box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) + box_size(3)
+
+        ! Image segment in -z
+        case(5)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) - box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) - box_size(3)
+        
+
+        ! Image segment in +x+z
+        case(6)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) + box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) + box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) + box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) + box_size(3)
+        
+        ! Image segment in -x+z
+        case(7)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) - box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) + box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) - box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) + box_size(3)
+
+        ! Image segment in -x-z
+        case(8)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) - box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) - box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) - box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) - box_size(3)
+
+        ! Image segment in +x-z
+        case(9)  !2018/08/05  changet
+        ghost_segments(i)%A(1)= hinges(j)%X_i(1) + box_size(1)
+        ghost_segments(i)%A(2)= hinges(j)%X_i(2)      
+        ghost_segments(i)%A(3)= hinges(j)%X_i(3) - box_size(3)
+        ghost_segments(i)%B(1)= hinges(k)%X_i(1) + box_size(1)
+        ghost_segments(i)%B(2)= hinges(k)%X_i(2)        
+        ghost_segments(i)%B(3)= hinges(k)%X_i(3) - box_size(3)            
+            
+   end select
 end do
 
 !$OMP END DO !NOWAIT
 !$OMP DO PRIVATE (i)
 
-do i=1, ubound(hinges,1)
+do i= 1, ubound(hinges,1)
 	hinges(i)%T_Excl_Vol= 0d0
 	hinges(i)%F_Excl_Vol= 0d0
 end do

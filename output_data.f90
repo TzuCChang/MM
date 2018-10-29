@@ -116,6 +116,9 @@ real(8),   dimension(3)     :: r
   print *, nbr_Fibers, nbr_Segments_Total
   print *, FiberLengthTotal, FiberLengthTotal/nbr_Fibers, EndToEndDistanceTotal/nbr_Fibers
   
+  write(301,*), nbr_Fibers, nbr_Segments_Total
+  write(301,*), FiberLengthTotal, FiberLengthTotal/nbr_Fibers, EndToEndDistanceTotal/nbr_Fibers
+  
   write(300,*), t, ",", FiberLengthTotal, ",", FiberLengthTotal/nbr_Fibers !, ",", EndToEndDistanceTotal/nbr_Fibers
   !write(301,*), r
            

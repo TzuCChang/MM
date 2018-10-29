@@ -1,6 +1,7 @@
 !Units in SI (m, N, Pa, etc)
 program cube_periodic
 
+!!¬°¦ó«e­±­n¥[m??
 use m_DataStructures
 
 use m_ReadData       !2018/07/21  change name
@@ -44,13 +45,21 @@ logical                                :: is_fric_wall, printVelocities
 type(simulationParameters)             :: simParameters
 !*******************************************************************
 ! Default values
+
+open(301,file='OUTPUT/OutputMessage.txt')
+
 simParameters%IsPeriodicY =.false. 
 print *, "Maximum number of threads" , omp_get_max_threads( )  
+write(301,*), "Maximum number of threads" , omp_get_max_threads( ) 
 
 #ifdef TENSOR            
 print *, "Hydrodynamic representation being used is TENSOR"
+write(301,*), "Hydrodynamic representation being used is TENSOR"
+
 #else
 print *, "Hydrodynamic representation being used is BEAD"
+write(301,*), "Hydrodynamic representation being used is BEAD"
+
 #endif
 
 !$OMP PARALLEL
@@ -83,14 +92,18 @@ print *, "Number of threads being used" , omp_get_num_threads( )
                   distanceFactor,&
                   simParameters )
 
+call fiber_regroup_minmax_hinges(   fibers, hinges )                !2018/08/05 add
+call fiber_regroup_minmax_segments( fibers, hinges )                !2018/08/05 add
+call fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
+
 open(300,file='OUTPUT/end_to_end_distance.txt')
-open(301,file='OUTPUT/end_to_end_UnitVector.txt')
+
 
 open(3,file='OUTPUT/positions.out')
 open(5,file='OUTPUT/vels.out')
 open(6,file='OUTPUT/forces.out')
 
-Inertia_Moment=(pi/4.d0)*r_fiber**4d0
+Inertia_Moment=(pi/4.d0)*r_fiber**4d0   ! Inertia_Moment»P­pºâªº´X¦ó¦³Ãö
 
 if(recover_simulation.eqv..true.) then 
 	n=frame*writ_period+1
@@ -109,14 +122,14 @@ nbr_Fibers_NEW= ubound(fibers,1)                                 !2018/07/14 ­×¥
 
 nbr_Fibers_OLD= nbr_Fibers_NEW                                   !2018/07/14 ­×¥¿
 
-
 print *, "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD            !2018/07/14 ¼W¥[
+write(301,*), "@@@@*( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD       !2018/08/05 ¼W¥[
 
 call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 ¼W¥[
 
 do i=n,  nbr_intgr
  
-    t = dt*i                                                    !2018/07/14 ­×¥¿
+    t = dt*i                                                     !2018/07/14 ­×¥¿
 
     !print *,"A t= ", t, i
 
@@ -125,6 +138,7 @@ do i=n,  nbr_intgr
     !print *, "Main 1"
  	if (MODULO(i,break_period)==0 .or. (i.eq.n) ) then 
  	   print *,"Integration", i, t
+       write(301,*), "Integration", i, t
 
        call bending_torque_whole(fibers, hinges, E_Young, Inertia_Moment)
 
@@ -164,8 +178,10 @@ do i=n,  nbr_intgr
                                   cells,&
                                   Nbr_bins,&
                                   distanceFactor )
-        
          
+         call fiber_regroup_minmax_hinges(   fibers, hinges )     !2018/08/05 add
+         call fiber_regroup_minmax_segments( fibers, hinges )     !2018/08/05 add
+
  	end if
  	
  	!do j=1, ubound (neighbor_list,1)
@@ -221,14 +237,18 @@ do i=n,  nbr_intgr
     !call cpu_time(start)
     
     if( .NOT. simParameters%IsPeriodicY ) then
-    call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
-                                     hinges,&
-                                     r_fiber,&
-                                     ex_vol_const,&
-                                     box_size,&
-                                     fric_coeff,&
-                                     is_fric_wall,&
-                                     gamma_dot )  
+        
+         !call fiber_regroup_minmax_hinges( fibers, hinges )        !2018/08/05 add
+         !call fiber_regroup_minmax_segments( fibers, hinges )      !2018/08/05 add
+              
+         call excl_VolForceMomentsWalls2( fibers,&    !2018/07/21 change name
+                                          hinges,&
+                                          r_fiber,&
+                                          ex_vol_const,&
+                                          box_size,&
+                                          fric_coeff,&
+                                          is_fric_wall,&
+                                          gamma_dot )  
     end if
     
     !call cpu_time(finish)
@@ -261,7 +281,7 @@ do i=n,  nbr_intgr
         nbr_Fibers_NEW= ubound(fibers,1)                                         !2018/07/14 ¼W¥[
         if ( nbr_Fibers_NEW .GT. (nbr_Fibers_OLD+nbr_Fibers_INC) ) then          !2018/07/14 ¼W¥[
               print *, "@@@@@( ", i, nbr_Fibers_NEW, nbr_Fibers_OLD              !2018/07/14 ¼W¥[
-              call output_Length( t, fibers, hinges, frame, printVelocities )  !2018/07/14 ¼W¥[   
+              call output_Length( t, fibers, hinges, frame, printVelocities )    !2018/07/14 ¼W¥[   
               nbr_Fibers_OLD= nbr_Fibers_NEW                                     !2018/07/14 ¼W¥[ 
         end if
     end if
@@ -273,6 +293,7 @@ end do
 
 call cpu_time(finish)
 print *, "Time Elpased",  OMP_get_wtime()-start, "s"
+write(301,*), "Time Elpased",  OMP_get_wtime()-start, "s"
 close(300)
 close(301)
 close (3) 

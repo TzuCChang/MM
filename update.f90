@@ -73,7 +73,7 @@ do i=1, ubound(hinges,1)
 end do
 
 dX = mod(gamma_dot * box_size(2)/2*t,box_size(1)) 
-!79-86行為一根纖維的質量中心
+
 if (periodic_boundary.eqv. .true.)then
 	do i=1, ubound (fibers,1)
 		X_fiber=0

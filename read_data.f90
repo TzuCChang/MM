@@ -33,14 +33,14 @@ subroutine read_data(frame,&
 real(8)                                :: E_Young, min_curv, r_fiber, viscosity, ex_vol_const,&
                                           gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor
 integer(8)                             :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period,&
-                                          i, j, k, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
+                                          i, j, k, m, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
 logical, intent(out)                   :: periodic_boundary
 real(8), dimension(3)                  :: box_size,boxSize,boxOrigin
 type(rod)  , allocatable, dimension(:) :: hinges
 type(fiber), allocatable, dimension(:) :: fibers
 logical                                :: recover_simulation,allow_breakage
 integer(8)                             :: frame
-real(8), dimension(3)                  :: coord
+real(8), dimension(3)                  :: coord, min_coor, max_coor
 logical                                :: is_fric_wall,printVelocities,isPeriodicX,isPeriodicY,isPeriodicZ
 type(simulationParameters)             :: simParameters
 
@@ -131,14 +131,12 @@ namelist /input/ recover_simulation,&
 				write (44,*), "0", coord(1), coord(2), coord(3)
 			end do
 		end do
-
-                close(44)
+        close(44)
 	else
 		frame=1	
 	end if
     !print *,"test 1"
 		
-        
 	!Counting the number of segments
     if (recover_simulation.eqv..false.) then
 		open (2, file="INPUT/Initial_Positions.txt")
@@ -195,7 +193,6 @@ namelist /input/ recover_simulation,&
 		end do
 	end do
 	close (99)
-    
       
 	!do i=1, nbr_fibers
 	!	print*,"Fiber Info:", fibers(i)%first_hinge,fibers(i)%nbr_hinges
@@ -207,6 +204,7 @@ namelist /input/ recover_simulation,&
 	!print *,"FRAME", frame
     print *, "periodic_boundary    ", periodic_boundary
     
+
 end subroutine read_data
                      
 end module m_ReadData
