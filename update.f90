@@ -4,59 +4,6 @@ module m_UpDate
 use m_DataStructures
 implicit none
 contains
-
-subroutine update_robust(fibers, hinges, dt)
-implicit none
-type(fiber) , dimension(:)            :: fibers
-type (rod), dimension(:)              :: hinges
-real(8)                               :: dt, deltaX, deltaY, delta
-integer(8)                            :: i,j
-real(8), dimension(3)                 :: dir_vec
-
-
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(I, J, DIR_VEC)
-!$OMP DO 
-do i=1, ubound (fibers,1)
-	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
-		dir_vec=hinges(j+1)%X_i-hinges(j)%X_i
-		hinges(j)%length2=sqrt(dot_product(dir_vec, dir_vec))
-	end do
-end do
-!$OMP END DO
-
-!$OMP DO
-do i=1, ubound (fibers,1)
-	hinges(fibers(i)%first_hinge)%X_i=hinges(fibers(i)%first_hinge)%X_i+hinges(fibers(i)%first_hinge)%v_i*dt
-	do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
-		hinges(j)%X_i=hinges(j)%X_i+hinges(j)%v_i*dt
-		dir_vec=hinges(j)%X_i-hinges(j-1)%X_i
-		dir_vec=dir_vec/(sqrt(dot_product(dir_vec, dir_vec)))
-		hinges(j)%X_i=hinges(j-1)%X_i+dir_vec*hinges(j-1)%length2
-	end do
-end do
-!$OMP END DO 
-!$OMP END PARALLEL
-
-
-end subroutine update_robust
-
-
-!*************************************************
-subroutine update(hinges, dt)
-type (rod), dimension(:)              :: hinges
-real(8)                               :: dt
-integer(8)                            :: i
-
-
-do i=1, ubound(hinges,1)
-	if (hinges(i)%is_stationary==0) then
-		hinges(i)%X_i=hinges(i)%X_i+hinges(i)%v_i*dt
-	end if
-end do
-
-
-end subroutine update
-!*************************************************
            
 subroutine update_periodic( fibers, hinges, simParameters )  !2018/10/09 change
 
@@ -65,8 +12,8 @@ type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
 logical                               :: periodic_boundary
 
-real(8)                               :: dt, cx, cy, cz, dX, t, gamma_dot 
-integer(8)                            :: i,j,k,l,jp1
+real(8)                               :: dt, cx, cy, cz, dist2, dX, t, gamma_dot, dist2_max, displ_max, ratio, dt_Step
+integer(8)                            :: i,j,k,l,jp1, iStep, nStep, mStep, nStep_max
 real(8), dimension(3)                 :: box_size, coord
 
 periodic_boundary = simParameters%periodic_boundary
@@ -77,7 +24,6 @@ t         = simParameters%time
 dt        = simParameters%dt
 
 
-
 do i=1, ubound (fibers,1)   !2018/09/22  add
 	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
 		coord= hinges(j+1)%X_i-hinges(j)%X_i
@@ -86,9 +32,75 @@ do i=1, ubound (fibers,1)   !2018/09/22  add
 end do
 
 
+nStep_max = simParameters%nStep_max
+displ_max = simParameters%displ_max   !2018/10/27 segments length= 0.10 mm為半徑,走一個步的距離,圓周長的3,600分之一
+nStep=      simParameters%nStep
+
+mStep= nStep
+dist2_max= 0.0d0
+
+do i=1, ubound(hinges,1)       !2018/10/27 修正
+	if( hinges(i)%is_stationary==0 ) then
+		coord= hinges(i)%v_i*dt 
+        dist2= sqrt( dot_product(coord, coord) )
+        dist2_max= max( dist2_max, dist2 )
+	end if
+end do
+
+if( dist2_max .lt. 1.0d-10 ) then
+    dist2_max= 1.0d-10
+end if
+
+ratio= displ_max/dist2_max
+
+if( ratio .gt. 1.d0 ) then
+    ratio= 1.d0
+end if
+
+iStep= int(ratio*nStep_max)
+
+if( iStep .lt. 1 ) then
+    iStep= 1
+else if( iStep .gt. nStep_max ) then
+    iStep= nStep_max
+end if
+
+
+!   write(*,61 ) "1 iStep=  ", iStep, nStep, mStep, nStep_max
+!61 format(A12, 4I6 )
+
+mStep= nStep + iStep
+
+if( mStep .gt. nStep_max ) then
+    mStep= nStep_max
+end if
+
+!   write(*,62 ) "2 iStep=  ", iStep, nStep, mStep, nStep_max
+!62 format(A12, 4I6 )
+
+iStep= mStep - nStep
+
+nStep= nStep + iStep
+
+simParameters%nStep= nStep
+
+dt_Step= dt*real(iStep)/real(nStep_max)
+
+simParameters%time= simParameters%time + dt_Step      !2018/10/29  修正                     
+
+!   write(*,63 ) "3 iStep=  ", iStep, nStep, mStep, nStep_max
+!63 format(A12, 4I6 )
+!   write(*,64 ) "@@@( dt = ", dt_Step, iStep, nStep, ratio, displ_max, dist2_max
+!64 format(A12, D15.5, I5, I5, F9.5, 2D15.5 )
+!   if( nStep .eq. nStep_max ) then               !2018/10/28 add
+!       write(*,65 ) "2 time=  ", simParameters%time*1.e6
+!65     format(A12, F12.2 )
+!      pause
+!   end if
+
 do i=1, ubound(hinges,1)
 	if( hinges(i)%is_stationary==0 ) then
-		hinges(i)%X_i= hinges(i)%X_i + hinges(i)%v_i*dt  !2018/09/22 修正
+		hinges(i)%X_i= hinges(i)%X_i + hinges(i)%v_i*dt_Step  !2018/10/27 修正
 	end if
 end do
 
@@ -308,6 +320,57 @@ if( periodic_boundary .eqv. .true. ) then
 end if
 
 end subroutine update_periodic_Initial
+
+!*************************************************
+subroutine update_robust(fibers, hinges, dt)
+implicit none
+type(fiber) , dimension(:)            :: fibers
+type (rod), dimension(:)              :: hinges
+real(8)                               :: dt, deltaX, deltaY, delta
+integer(8)                            :: i,j
+real(8), dimension(3)                 :: dir_vec
+
+
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(I, J, DIR_VEC)
+!$OMP DO 
+do i=1, ubound (fibers,1)
+	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
+		dir_vec=hinges(j+1)%X_i-hinges(j)%X_i
+		hinges(j)%length2=sqrt(dot_product(dir_vec, dir_vec))
+	end do
+end do
+!$OMP END DO
+
+!$OMP DO
+do i=1, ubound (fibers,1)
+	hinges(fibers(i)%first_hinge)%X_i=hinges(fibers(i)%first_hinge)%X_i+hinges(fibers(i)%first_hinge)%v_i*dt
+	do j=fibers(i)%first_hinge+1, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+		hinges(j)%X_i=hinges(j)%X_i+hinges(j)%v_i*dt
+		dir_vec=hinges(j)%X_i-hinges(j-1)%X_i
+		dir_vec=dir_vec/(sqrt(dot_product(dir_vec, dir_vec)))
+		hinges(j)%X_i=hinges(j-1)%X_i+dir_vec*hinges(j-1)%length2
+	end do
+end do
+!$OMP END DO 
+!$OMP END PARALLEL
+
+end subroutine update_robust
+
+!*************************************************
+subroutine update(hinges, dt)
+type (rod), dimension(:)              :: hinges
+real(8)                               :: dt
+integer(8)                            :: i
+
+
+do i=1, ubound(hinges,1)
+	if (hinges(i)%is_stationary==0) then
+		hinges(i)%X_i=hinges(i)%X_i+hinges(i)%v_i*dt
+	end if
+end do
+
+end subroutine update
+!*************************************************
 
 end module m_UpDate
 !====================================================================

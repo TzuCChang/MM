@@ -52,10 +52,13 @@ namelist /input/ recover_simulation,&
     read(1,nml = input)
 	close(1)
 
-    simParameters%IsPeriodicY = .true.                        !2018/10/08 add
-    simParameters%periodic_boundary = periodic_boundary       !2018/10/09 add
+    simParameters%IsPeriodicY = periodic_boundary     !2018/10/29 IsPeriodicY true(Periodic) or false(Wall)
+    
+    simParameters%periodic_boundary = .true.          !2018/10/09 add
 
     simParameters%Inertia_Moment=  (pi/4.d0)*r_fiber**4d0     !2018/10/08 add
+    
+
 
 
     simParameters%recover_simulation = recover_simulation     !2018/10/08 add
@@ -96,7 +99,7 @@ namelist /input/ recover_simulation,&
     print *,"gamma_dot", gamma_dot
     print *,"epsilon_dot", epsilon_dot
     print *,"flow_case", flow_case
-    print *,"periodic_boundary", periodic_boundary
+    print *,"IsPeriodicY", periodic_boundary
     print *,"box_size", box_size(1)
     print *,"box_size", box_size(2)
     print *,"box_size", box_size(3)    
@@ -123,7 +126,7 @@ namelist /input/ recover_simulation,&
     write(301,*),"gamma_dot", gamma_dot
     write(301,*),"epsilon_dot", epsilon_dot
     write(301,*),"flow_case", flow_case
-    write(301,*),"periodic_boundary", periodic_boundary
+    write(301,*),"IsPeriodicY", periodic_boundary
     write(301,*),"box_size", box_size(1)
     write(301,*),"box_size", box_size(2)
     write(301,*),"box_size", box_size(3)    
@@ -270,8 +273,8 @@ end do
 	!	print *, hinges(i)%X_i(1), hinges(i)%X_i(2), hinges(i)%X_i(3)
 	!end do
 	!print *,"FRAME", frame
-    print *,     "periodic_boundary    ", periodic_boundary
-    write(301,*),"periodic_boundary    ", periodic_boundary
+    print *,     "IsPeriodicY    ", periodic_boundary
+    write(301,*),"IsPeriodicY    ", periodic_boundary
 !pause    
 
 

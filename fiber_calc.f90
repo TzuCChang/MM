@@ -124,15 +124,9 @@ d = hinge1%r/hinge1%length
 
 middle_position= (hinge1%X_i+hinge2%X_i)/2d0
 
-if ( flow_case == 1 ) then   !2018/10/20
+call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !更換 2018/07/14
 
-    call set_velocity( middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case )    !更換 2018/07/14
-
-else if ( flow_case == 1848 ) then
-
-    call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !新增 2018/07/14
-
-end if   !2018/10/20 
+!call set_velocity_NEW(middle_position,vel,omega,gamma_dot,epsilon_dot,flow_case) !新增 2018/07/14
 
 hinge1%u_oo =    vel
 hinge1%omega_oo= omega
@@ -246,23 +240,12 @@ do i=1, hinge1%nbr_beads
     
     X_local= X_j - hinge1%X_i
 		
-
-    if (flow_case == 1 ) then     !2018/10/20
 	call set_velocity( X_j,&
                        vel,&
                        omega,&
                        gamma_dot,&
                        epsilon_dot,&
                        flow_case )
-    
-else if ( flow_case == 1848 ) then
-    call set_velocity_NEW( X_j,&
-                             vel,&
-                             omega,&
-                             gamma_dot,&
-                             epsilon_dot,&
-                             flow_case )
-    end if     !2018/10/20
 	 
     do j=1, 3
 		 X_local_mat(  j,1)= X_local(j)		

@@ -35,9 +35,10 @@ integer(8)                               :: i, j, k
             
 end subroutine output_data
 
-!======================================================================
-subroutine output_Length( t, fibers, hinges )  !2018/09/22  修正
 
+subroutine output_Length( fibers, hinges, simParameters )  !2018/10/29 修正
+
+type(simulationParameters)              :: simParameters
 type(fiber), dimension(:),  allocatable :: fibers
 type(rod),   dimension(:),  allocatable :: hinges
 
@@ -47,7 +48,8 @@ real                        :: length, lengthAvg
 integer(8)                  :: i, j, k, mSegments
 integer                     :: mm, nn, tt
 
-
+    t= simParameters%time
+    
     FiberLength_Total= 0.d0
     mSegments= 0
 
@@ -73,7 +75,7 @@ integer                     :: mm, nn, tt
     lengthAvg= 1000*FiberLength_Total/nn          !2018/09/22   mean  Fiber length(mm)
 
     write(300,*), tt, nn, mm, length, lengthAvg
-	write(307,*), tt,",", lengthAvg                   !2018/10/07   new output
+	write(307,*), tt,",", lengthAvg                   !2018/10/27   new output    
   
     print *,      "@@@", tt, nn, mm, length, lengthAvg
     write(301,*), "@@@", tt, nn, mm, length, lengthAvg
@@ -83,14 +85,16 @@ end subroutine output_Length
 
 
 !======================================================================
-subroutine output_LengthDistribution( t, fibers, indexA )  !2018/08/12 新增
+subroutine output_LengthDistribution( fibers, indexA, simParameters )  !2018/10/29 修正
 
-type(fiber), dimension(:), allocatable :: fibers
-integer(8),  dimension(:), allocatable :: indexA
+type(simulationParameters)              :: simParameters
+type(fiber), dimension(:), allocatable  :: fibers
+integer(8),  dimension(:), allocatable  :: indexA
 real(8)      :: t
 integer(8)   :: i, j, maxSegments
 integer      :: tt
 
+t= simParameters%time
 
 if( allocated(indexA) .eq. .false. )  then
     
@@ -110,24 +114,35 @@ do i= 1, ubound (fibers,1)
    indexA(j)= indexA(j) + 1
 end do
 
-tt= t*1.0e6 + 0.5   !2018/08/12  +0.5 的用意是4捨5入
+!tt= t*1.0e6 + 0.5    !2018/08/12  +0.5 的用意是4捨5入
+
 maxSegments= ubound(indexA,1)
 
-!print *,"&&&", tt, ubound(fibers,1), maxSegments
-write(302,*),  tt, ubound(fibers,1), maxSegments
+write(*,100),  t*1.e6, ubound(fibers,1), maxSegments
+100 format( F16.4, 2X, I10, I10 )
+    
+write(302,200),  t*1.e6, ubound(fibers,1), maxSegments
+200 format( F16.4, 2X, I10, I10 )
+
 do j=1, maxSegments
-!  print *, "&&&( ", j, indexA(j)
-  write(302,*),     j, indexA(j) 
+    
+    !print *, "&&&( ", j, indexA(j)
+    
+     write(302,300),  j, indexA(j)
+300  format( I10, I10 ) 
+     
 end do
 !pause
 
 end subroutine output_LengthDistribution
 
-!======================================================================
-subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 新增
+subroutine output_OrientationTensor( fibers, hinges, simParameters )  !2018/10/12 新增
+
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
-real(8),     dimension(:,:)              :: AA
+type(simulationParameters)               :: simParameters
+
+real(8),     dimension(3,3)              :: AA
 real(8),     dimension(3)                :: ra
 real(8)      :: t, length, trace_A
 integer(8)   :: ia, ja,  mm
@@ -149,10 +164,12 @@ do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
 end do
 end do
 
-tt= t*1.0e6 + 0.5                    !2018/08/12  +0.5 的用意是4捨5入
+tt= simParameters%time*1.0e6 + 0.5            !2018/10/12  +0.5 的用意是4捨5入
 trace_A= AA(1,1) + AA(2,2) + AA(3,3)
 
 AA= AA/trace_A
+
+simParameters%AA= AA                          !2018/10/12 新增
 
 !print *, "### trace ",trace_A, mm
 print *, "###", tt, ubound (fibers,1)
@@ -163,33 +180,41 @@ write(301,*), AA
 
 write(303,*), tt, ubound (fibers,1)
 write(303,*), AA
-write(306,*), tt,",", AA(1,1)            !2018/10/07   new output
+write(306,*), tt,",", AA(1,1)                 !2018/10/27   new output
+
 !pause
 
 end subroutine output_OrientationTensor
 
-!======================================================================
-subroutine output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31
+subroutine output_PositionsForTheMomemt ( fibers, hinges )   !2018/10/12
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
-integer(8)                               :: iii, jjj, kkk, nbr_hinges
+integer(8)                               :: i, j, k
 
-        open(304,file='OUTPUT/PositionsForTheMoment.txt')  !2018/09/02
-        kkk=1
+open(304,file='OUTPUT/PositionsForTheMoment.txt')            !2018/09/02
+
+        k=1
+        
         write (304,*), ubound(fibers,1)
-        do iii=1, ubound(fibers,1)
-  	        write (304,*), fibers(iii)%nbr_hinges
-  	            do jjj=kkk, kkk+fibers(iii)%nbr_hinges-1
-  		            write (304,*),0, real(hinges(kkk)%X_i(1),4), real(hinges(kkk)%X_i(2),4), real(hinges(kkk)%X_i(3),4)
-		            kkk=kkk+1
-  	        end do
+        
+        do i=1, ubound(fibers,1)
+            
+  	       write (304,*), fibers(i)%nbr_hinges
+            
+  	       do j=k, k+fibers(i)%nbr_hinges-1
+               
+  		      write (304,*), 0, real(hinges(k)%X_i(1),4), real(hinges(k)%X_i(2),4), real(hinges(k)%X_i(3),4)
+              
+		      k= k + 1
+              
+           end do
+
         end do
-        close(304)                                         !2018/09/02
-!pause
+        
+close(304)
 
 end subroutine output_PositionsForTheMomemt
 
-!======================================================================
 subroutine output_FiberLengthModification( fibers, hinges )  !2018/09/22  add
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
@@ -232,7 +257,7 @@ end do
 
 end subroutine output_FiberLengthModification
 
-!======================================================================
+
 subroutine output_Initial_Positions_New( fibers, hinges, simParameters )   !2018/09/22
         
 implicit none
@@ -332,7 +357,6 @@ close( 305 )
 
 end subroutine output_Initial_Positions_New
 
-!======================================================================
 subroutine output_DynamicP_1848( flowcase_1848, simParameters )               !2018/10/11 
 
 implicit none
@@ -344,7 +368,7 @@ integer(8)                                 :: h                               !2
         
         print *,     "###"               
         print *,     "### Dynamic Parameters CHANGE"                          !2018/10/11 增加
-        print *,     "### StepNo., Time(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
+        print *,     "### StepNo., NextTime(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
         print *,     "###",&
                       int(simParameters%h),&
                       int(0.5+1.0e6*flowcase_1848(h)%Duration),&
@@ -353,7 +377,7 @@ integer(8)                                 :: h                               !2
         print *,     "###"                                                    !2018/10/11 增加
         write(301,*),"###"
         write(301,*),"### Dynamic Parameters CHANGE"                          !2018/10/11 增加
-        write(301,*),"### StepNo., Time(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
+        write(301,*),"### StepNo., NextTime(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
         write(301,*),"###",&
                       int(simParameters%h),&
                       int(0.5+1.0e6*flowcase_1848(h)%Duration),&
@@ -363,6 +387,238 @@ integer(8)                                 :: h                               !2
 
 end subroutine output_DynamicP_1848  !2018/10/11 change name
 
+
+!======================================================================
+subroutine output_minmax_hinges( fibers, hinges ) !2018/10/27 change name
+
+type(fiber), allocatable, dimension(:) :: fibers
+type(rod)  , allocatable, dimension(:) :: hinges
+real(8), dimension(3)                  :: coord, min_coor, max_coor
+integer(8)                             :: i, j, k, m
+
+!2018/08/05  Compute center of mass for all fibers coord
+!2018/08/05  Compute center of mass for all fibers coord
+print *,"@@@"
+print *,"@@@ based on all hinges"
+write(301,*), "@@@"
+write(301,*), "@@@ based on all hinges"
+
+m= 0
+coord= 0
+do i= 1, ubound (fibers,1)  
+do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+   coord= coord + hinges(j)%X_i
+   m= m+1
+end do
+end do        
+coord= coord/real(m)  !2018/08/05  coord= center of mass 
+
+print *,"cen ", coord
+write(301,*),"cen ", coord
+
+min_coor=   huge(0d0)
+max_coor=  -huge(0d0)
+do k=1,3
+do i= 1, ubound (fibers,1)  
+do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+   coord= hinges(j)%X_i
+   min_coor(k)= min( min_coor(k), coord(k) )
+   min_coor(k)= min( min_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+end do
+end do  
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
+
+print *,"min ", min_coor
+print *,"max ", max_coor
+write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
+
+min_coor=   huge(0d0)
+max_coor=  -huge(0d0)
+do k=1,3
+do i=1, ubound (fibers,1)
+   m= 0
+   coord= 0
+  !Compute center of mass for fiber i
+   do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+		 coord= coord + hinges(j)%X_i
+		 m= m+1
+   end do
+   coord= coord/real(m)
+   min_coor(k)= min( min_coor(k), coord(k) )
+   min_coor(k)= min( min_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )   
+end do
+end do    !2018/08/05 找出可以容納所有的 segments 框架的座標範圍
+
+print *,"min ", min_coor
+print *,"max ", max_coor
+write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
+write(301,*),"@@@"
+!print *,"@@@"
+
+
+end subroutine  output_minmax_hinges
+
+!======================================================================
+subroutine output_minmax_segments( fibers, hinges ) !2018/10/27 change name
+
+type(fiber), allocatable, dimension(:) :: fibers
+type(rod)  , allocatable, dimension(:) :: hinges
+real(8), dimension(3)                  :: coord, min_coor, max_coor
+integer(8)                             :: i, j, k, m
+
+!2018/08/05  Compute center of mass for all fibers coord
+print *,"@@@"
+print *,"@@@ based on all segments"
+write(301,*),"@@@"
+write(301,*),"@@@ based on all segments"
+
+m= 0
+coord= 0
+do i= 1, ubound (fibers,1)  
+do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+   coord= coord + (hinges(j)%X_i+hinges(j+1)%X_i)/2d0
+   m= m+1
+end do
+end do        
+coord= coord/real(m)  !2018/08/05  coord= center of mass 
+
+print *,"cen ", coord
+write(301,*),"cen ", coord
+
+min_coor=   huge(0d0)
+max_coor=  -huge(0d0)
+do k=1,3
+do i= 1, ubound (fibers,1)  
+do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+   coord= (hinges(j)%X_i+hinges(j+1)%X_i)/2d0
+   min_coor(k)= min( min_coor(k), coord(k) )
+   min_coor(k)= min( min_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+end do
+end do  
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
+
+print *,"min ", min_coor
+print *,"max ", max_coor
+write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
+
+min_coor=   huge(0d0)
+max_coor=  -huge(0d0)
+do k=1,3
+do i= 1, ubound (fibers,1)
+   m= 0
+   coord= 0
+   do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+      coord= coord + (hinges(j)%X_i+hinges(j+1)%X_i)/2d0
+      m= m+1
+   end do
+   coord= coord/real(m)
+   min_coor(k)= min( min_coor(k), coord(k) )
+   min_coor(k)= min( min_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+   max_coor(k)= max( max_coor(k), coord(k) )
+end do  
+end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
+
+print *,"min ", min_coor
+print *,"max ", max_coor
+write(301,*),"min ", min_coor
+write(301,*),"max ", max_coor
+write(301,*),"@@@"
+!pause
+
+end subroutine  output_minmax_segments
+
+subroutine output_OrientationTensor_OLD( fibers, hinges, simParameters )  !2018/10/31 修正
+
+type(fiber), dimension(:),   allocatable :: fibers
+type(rod),   dimension(:),   allocatable :: hinges
+type(simulationParameters)               :: simParameters
+
+real(8),     dimension(3,3)     :: AA, BB
+real(8),     dimension(3)       :: ra
+
+real(8)      :: t, length, trace_A, trace_B, B11_bar
+integer(8)   :: ia, ja,  mm, nn, nbr_hinges
+integer      :: tt, i, j
+
+
+      write(*,*),"@@@("
+      write(*,  10 ) "@@@(","n0,","fiber,","nbr,","length,","a11,","a22,","a33,","A11_bar"
+10    format( A5,A6,A8,A6,A11,A8,A10,A9,A12 )
+      write(*,*),"@@@(" 
+      write(301,*),"@@@("
+      write(301,  12 ) "@@@(","n0,","fiber,","nbr,","length,","a11,","a22,","a33,","A11_bar"
+12    format( A5,A6,A8,A6,A11,A8,A10,A9,A12 )
+      write(301,*),"@@@("
+
+AA= 0
+mm= 0
+nn= 0
+do ia= 1, ubound (fibers,1)
+
+   BB= 0
+   do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
+      ra= hinges(ja+1)%X_i - hinges(ja)%X_i
+          length= sqrt( dot_product(ra,ra) )
+      ra= ra/length
+      do i=1,3
+      do j=1,3
+         BB(i,j)= BB(i,j) + ra(i)*ra(j)*length   !2018/10/31 修正
+         AA(i,j)= AA(i,j) + ra(i)*ra(j)*length   !2018/08/14  加入權重長度,因直徑一樣,長度代表體積
+      end do
+      end do
+      mm= mm + 1 
+   end do
+
+   trace_B= BB(1,1) + BB(2,2) + BB(3,3)         !2018/10/31 修正
+   BB=      BB/trace_B                          !2018/10/31 修正
+   B11_bar= BB(1,1) + BB(3,3)                   !2018/10/31 修正
+   nbr_hinges= fibers(ia)%nbr_hinges
+
+   if( (BB(2,2) .lt. 0.10) .and. (nbr_hinges .gt. 20) ) then
+      nn= nn + 1 
+      write(*,  20 ) "@@@( ", nn, ia, nbr_hinges, trace_B, BB(1,1), BB(2,2), BB(3,3), B11_bar
+20    format( A6, I5, I6, I6, F12.5, 4F10.5 ) 
+      write(301,22 ) "@@@( ", nn, ia, nbr_hinges, trace_B, BB(1,1), BB(2,2), BB(3,3), B11_bar
+22    format( A6, I5, I6, I6, F12.5, 4F10.5 )
+   end if
+
+end do
+
+write(*,*),"@@@("
+write(301,*),"@@@("      
+!pause
+      
+tt= simParameters%time*1.0e6 + 0.5            !2018/10/12  +0.5 的用意是4捨5入
+trace_A= AA(1,1) + AA(2,2) + AA(3,3)
+
+AA= AA/trace_A
+
+simParameters%AA= AA                          !2018/10/12 新增
+
+!print *, "### trace ",trace_A, mm
+print *, "###", tt, ubound (fibers,1)
+print *, AA
+
+write(301,*), "###", tt, ubound (fibers,1)
+write(301,*), AA
+
+write(303,*), tt, ubound (fibers,1)
+write(303,*), AA
+write(306,*), tt,",", AA(1,1)                 !2018/10/27   new output
+
+!pause
+
+end subroutine output_OrientationTensor_OLD
 
 
 end module m_OutputData
