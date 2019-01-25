@@ -10,11 +10,13 @@ subroutine output_data( fibers, hinges, simParameters )  !2018/10/10 修正
 type(simulationParameters)               :: simParameters
 type (fiber), dimension(:), allocatable  :: fibers
 type(rod),    dimension(:), allocatable  :: hinges
-integer(8)                               :: i, j, k
+integer(8)                               :: i, j, k, n
 
+  n= simParameters%frame*simParameters%writ_period                      !2018/11/18  writ_period + 1
+  
   open(4,file='OUTPUT/nbr_frames.txt')
   	  !write (4,*), ubound(hinges,1)
-	   write (4,*), simParameters%frame
+	   write (4,*), simParameters%frame, n, simParameters%nStep_Total   !2018/11/18  writ_period + 1
   close(4)
 
   k=1
@@ -90,11 +92,12 @@ subroutine output_LengthDistribution( fibers, indexA, simParameters )  !2018/10/
 type(simulationParameters)              :: simParameters
 type(fiber), dimension(:), allocatable  :: fibers
 integer(8),  dimension(:), allocatable  :: indexA
-real(8)      :: t
+real(8)      :: t, tt
 integer(8)   :: i, j, maxSegments
-integer      :: tt
+
 
 t= simParameters%time
+tt= t*1.d6
 
 if( allocated(indexA) .eq. .false. )  then
     
@@ -118,11 +121,11 @@ end do
 
 maxSegments= ubound(indexA,1)
 
-write(*,100),  t*1.e6, ubound(fibers,1), maxSegments
-100 format( F16.4, 2X, I10, I10 )
+!write(*,100),  tt, ubound(fibers,1), maxSegments
+!100 format( F18.8, I10, I10 )
     
-write(302,200),  t*1.e6, ubound(fibers,1), maxSegments
-200 format( F16.4, 2X, I10, I10 )
+write(302,200),  tt, ubound(fibers,1), maxSegments
+200 format( F18.8, I10, I10 )
 
 do j=1, maxSegments
     
@@ -144,9 +147,12 @@ type(simulationParameters)               :: simParameters
 
 real(8),     dimension(3,3)              :: AA
 real(8),     dimension(3)                :: ra
-real(8)      :: t, length, trace_A
+real(8)      :: t, tt, length, trace_A
 integer(8)   :: ia, ja,  mm
-integer      :: tt, i, j
+integer      :: i, j
+
+t= simParameters%time
+tt= t*1.d6
 
 AA= 0
 mm= 0
@@ -164,24 +170,34 @@ do ja= fibers(ia)%first_hinge, fibers(ia)%first_hinge+fibers(ia)%nbr_hinges-2
 end do
 end do
 
-tt= simParameters%time*1.0e6 + 0.5            !2018/10/12  +0.5 的用意是4捨5入
+!tt= simParameters%time*1.0e6 + 0.5            !2018/10/12  +0.5 的用意是4捨5入
 trace_A= AA(1,1) + AA(2,2) + AA(3,3)
 
 AA= AA/trace_A
 
-simParameters%AA= AA                          !2018/10/12 新增
+simParameters%AA= AA                             !2018/10/12 新增
 
 !print *, "### trace ",trace_A, mm
-print *, "###", tt, ubound (fibers,1)
-print *, AA
+!print *, "###", tt, ubound (fibers,1), simParameters%nStep_Total
 
-write(301,*), "###", tt, ubound (fibers,1)
-write(301,*), AA
+      write(*,103),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
+103   format( A4, F15.2, I9, I10 )                  !2018/11/18  new output
+      
+      print *, AA
 
-write(303,*), tt, ubound (fibers,1)
-write(303,*), AA
-write(306,*), tt,",", AA(1,1)                 !2018/10/27   new output
+      write(301,104),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
+104   format( A4, F15.2, I9, I10 )                  !2018/11/18  new output
+   
+      write(301,*), AA
 
+!      write(303,*), tt, ubound (fibers,1)
+      write(303,105),tt ,ubound(fibers,1)
+105   format( F18.8, I10 )                  !2018/11/18  new output
+      
+      write(303,*), AA
+
+      write(306,106), tt, AA(1,1)                !2018/11/18  new output
+106   format( F18.8, F10.6 )                  !2018/11/18  new output
 !pause
 
 end subroutine output_OrientationTensor

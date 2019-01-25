@@ -101,7 +101,7 @@ integer                  :: i, j, k
 real(8)                  :: ex_vol_const, dist, r_fiber, vec_to_wall, threshold
 real(8), dimension(3)    :: box_size, Exc_Vol_Force_Partial, r, v_rel, X_fiber
 real(8), dimension(2)    :: wall_position
-real(8)                  :: FAC, gamma_dot
+real(8)                  :: FAC, gamma_dot, v0
 real(8)                  :: fric_coeff
 
 
@@ -170,7 +170,14 @@ end if
                 v_rel(1)= -gamma_dot*box_size(2)/2-hinges(j)%v_i(1)
             end if 
             
-            v_rel= v_rel/(sqrt(dot_product(v_rel,v_rel)))
+                v0= sqrt(dot_product(v_rel,v_rel))  !2018/11/16 modified
+            
+                if( v0 .gt. 1.e-10 ) then           !2018/11/16 modified
+                    v_rel= v_rel/v0                 !2018/11/16 modified
+                else 
+                    v_rel= 0.                       !2018/11/16 modified
+                end if
+                
         
             if( is_fric_wall ) then               !2018/08/04  Check for NaN. If NaN, vrel
                 Exc_Vol_Force_Partial= Exc_Vol_Force_Partial+ v_rel * abs(fric_coeff*Exc_Vol_Force_Partial) 
@@ -212,7 +219,13 @@ end if
                     v_rel(1)= -gamma_dot*box_size(2)/2-hinges(j)%v_i(1)
                 end if 
                 
-                v_rel= v_rel/(sqrt(dot_product(v_rel,v_rel)))
+                v0= sqrt(dot_product(v_rel,v_rel))  !2018/11/16 modified
+            
+                if( v0 .gt. 1.e-10 ) then           !2018/11/16 modified
+                    v_rel= v_rel/v0                 !2018/11/16 modified
+                else 
+                    v_rel= 0.                       !2018/11/16 modified
+                end if
                 
                 Exc_Vol_Force_Partial(2)= FAC*dist*ex_vol_const*exp(-2*(dist-1))
                

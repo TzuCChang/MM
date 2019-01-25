@@ -32,6 +32,7 @@ logical                                    :: isOutputMessage, isProgramStop, ic
 integer(8), dimension(:,:), allocatable    :: neighbor_list
 integer(8), dimension(:),   allocatable    :: indexA                                                    !2018/08/12
 integer(8)                                 :: i, j, k, n, nbr_Fibers_OLD, nbr_Fibers_NEW, nbr_Fibers_INC
+integer(8)                                 :: i_real
 real(8),    dimension(:,:), allocatable    :: distance_neighbors
 real(8)                                    :: start, finish, start2, finish2
 real(8),    parameter                      :: pi=3.141592
@@ -72,14 +73,14 @@ write(306,*), "Time(micro sec.), a11"                                         !2
 write(307,*), "Time(micro sec.), Ln(mm)"                                      !2018/10/27
 
 
-
 call  read_data( fibers, hinges, simParameters )                              !2018/10/05 add by Hakan
 
 if( simParameters%recover_simulation.eqv..true. ) then 
-	n= simParameters%frame*simParameters%writ_period + 1
+	n= simParameters%frame*simParameters%writ_period + 0                      !2018/11/18  writ_period + 1
 else 
-	n=1
+	n= 0                                                                      !2018/11/18 n= 1
 	simParameters%frame= 1
+    simParameters%nStep_Total= 0                                              !2018/11/18 add
 end if
 
 i= n                                                                          !2018/10/29 修正
@@ -133,8 +134,11 @@ simParameters%nStep=     0                                                    !2
 isProgramStop  = .false.                                                      !2018/10/29
 icheck_Breakage= .true.                                                       !2018/10/29
 
+
 do while ( isProgramStop .eqv. .false. )
-    
+
+    simParameters%nStep_Total= simParameters%nStep_Total + 1                  !2018/11/18
+
     if( simParameters%nStep .eq. simParameters%nStep_max ) then               !2018/10/29
         
         i= i + 1                                                              !2018/10/29 
@@ -174,8 +178,9 @@ if( icheck_Breakage .eqv. .true. ) then
         
        call bending_torque_whole( fibers, hinges, simParameters )             !2018/10/08  修正
        
+       
        if ( simParameters%allow_breakage ) then
-           call hinges_damage(fibers, hinges, simParameters )                 !2018/10/10  修正
+           call hinges_damage (fibers, hinges, simParameters )                 !2018/10/10  修正
        end if
 
        call GhostSegments_Location( fibers, hinges, ghost_segments, simParameters )               !2018/10/09  修正
@@ -238,8 +243,11 @@ end if
  	call update_periodic( fibers, hinges, simParameters )  !2018/10/09 change
     
 ! 	if (MODULO(i,simParameters%writ_period)==0 .or. (i .le. 5) ) then
- 	if (MODULO(i,simParameters%writ_period)==0 ) then
-
+ 	if (MODULO(i+1,simParameters%writ_period)==0 .and. &
+       (simParameters%nStep .eq. simParameters%nStep_max) ) then              !2018/11/18  add
+        
+ 		simParameters%frame = simParameters%frame + 1                         !2018/11/18  add
+        
  		call output_data( fibers, hinges, simParameters )
         call output_LengthDistribution(  fibers, indexA, simParameters )      !2018/10/29
         call output_OrientationTensor(   fibers, hinges, simParameters )      !2018/10/12 增加 
@@ -251,7 +259,7 @@ end if
             call output_Length( fibers, hinges, simParameters )               !2018/10/29
         end if
         
- 		simParameters%frame = simParameters%frame + 1
+
         
     end if
    

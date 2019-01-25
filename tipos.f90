@@ -96,7 +96,7 @@ logical                  :: recover_simulation, allow_breakage
 logical                  :: is_fric_wall, printVelocities
 
 
-integer(8)               :: flow_case, nbr_Dynamic, frame, h, nStep_max
+integer(8)               :: flow_case, nbr_Dynamic, frame, h, nStep_max, nStep_Total
 integer(8)               :: nbr_neighbors, nbr_intgr, writ_period, break_period, nStep         !2018/10/27
 integer, dimension(3)    :: Nbr_bins, box_dimension                                            !2018/10/09
 

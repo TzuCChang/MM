@@ -13,11 +13,13 @@ implicit none
 type(simulationParameters)                :: simParameters
 type (fiber), dimension(:), allocatable   :: fibers, fibers_temp
 type (rod)  , dimension(:), allocatable   :: hinges, hinges_temp
-real(8)     :: max_alpha, r_fiber, fac, alpha,min_curv,curv
-integer     :: k, i, j, m, n
+real(8)        :: max_alpha, r_fiber, fac, alpha,min_curv,curv, t
+integer(8)     :: k, i, j, m, n
+integer(8), dimension(10)  ::nC
 
  min_curv = simParameters%min_curv
  r_fiber  = simParameters%r_fiber
+ t= simParameters%time                                              !2018/11/19 add
 
 !fac=0.07*r_fiber   !2018/09/13 origion
 
@@ -53,6 +55,30 @@ end do
 do i=1, ubound(fibers,1)
 	hinges(fibers(i)%first_hinge)%is_separated=.true.
 end do
+
+nC= 0                                                       !2018/11/19 add
+do i=1, ubound(hinges,1)                                    !2018/11/19 add
+   if(      hinges(i)%curv .lt. 1.d0*min_curv ) then        !2018/11/19 add
+            nC(1)= nC(1) + 1                                !2018/11/19 add
+   else if( hinges(i)%curv .lt. 2.d0*min_curv ) then        !2018/11/19 add
+            nC(2)= nC(2) + 1                                !2018/11/19 add
+   else if( hinges(i)%curv .lt. 3.d0*min_curv ) then        !2018/11/19 add
+            nC(3)= nC(3) + 1                                !2018/11/19 add
+   else if( hinges(i)%curv .lt. 4.d0*min_curv ) then        !2018/11/19 add
+            nC(4)= nC(4) + 1                                !2018/11/19 add
+   else if( hinges(i)%curv .lt. 5.d0*min_curv ) then        !2018/11/19 add
+            nC(5)= nC(5) + 1                                !2018/11/19 add
+   else                                                     !2018/11/19 add
+            nC(6)= nC(6) + 1                                !2018/11/19 add
+   end if                                                   !2018/11/19 add
+end do
+       write(*,100),  "@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+100    format( A4, F12.2, 6I9 )
+       write(301,101),"@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+101    format( A4, F12.2, 6I9 )
+!pause
+
+
 
 !call hinges_SortOrder_curv( hinges )   !2018/10/05  關掉, 量大, 時間花太長
 

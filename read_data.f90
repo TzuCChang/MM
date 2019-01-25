@@ -14,7 +14,7 @@ logical                                :: periodic_boundary
 logical                                :: recover_simulation,allow_breakage
 logical                                :: is_fric_wall,printVelocities
 
-integer(8)                             :: frame, nbr_Dynamic     !2018/10/05
+integer(8)                             :: frame, nbr_Dynamic, nStep_Total        !2018/11/18
 integer(8)                             :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period
 integer(8)                             :: i, j, k, m, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
 real(8), dimension(3)                  :: box_size
@@ -145,7 +145,7 @@ namelist /input/ recover_simulation,&
 
 		open( 4, file='OUTPUT/nbr_frames.txt' )
         
-		      read(4,*), frame
+		      read(4,*), frame, nStep_Total
               
               frame= frame - 1
               
@@ -179,6 +179,7 @@ namelist /input/ recover_simulation,&
     end if
 
     simParameters%frame = frame                                        !2018/10/08 add
+    simParameters%nStep_Total = nStep_Total                                        !2018/10/08 add
     
     !print *,"test 1"
 		
