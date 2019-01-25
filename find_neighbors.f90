@@ -28,6 +28,8 @@ real(8), dimension(:),   allocatable   :: distanceSegms
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
 real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
 real(8)                                :: distanceFactor, ex_vol_const, fric_coeff
+integer(8), dimension(10)  ::nC
+
 
 nbr_bins       = simParameters%nbr_bins              !2018/10/10
 r_fiber        = simParameters%r_fiber               !2018/10/10
@@ -56,6 +58,8 @@ distance_neighbors= 1d10
 
 distanceSegms=   1d10
 IndexSegms=      0
+
+nC= 0
 
 do i=1, ubound( fibers, 1 )
 	do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
@@ -92,7 +96,21 @@ do i=1, ubound( fibers, 1 )
 			                        ghost_hingeB%X_i= B2
                                     
 					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
-                                    
+
+   if(      Gab_min .lt. 1.d0*r_fiber ) then
+            nC(1)= nC(1) + 1
+   else if( Gab_min .lt. 2.d0*r_fiber ) then
+            nC(2)= nC(2) + 1
+   else if( Gab_min .lt. 3.d0*r_fiber ) then
+            nC(3)= nC(3) + 1
+   else if( Gab_min .lt. 4.d0*r_fiber ) then
+            nC(4)= nC(4) + 1
+   else if( Gab_min .lt. 5.d0*r_fiber ) then
+            nC(5)= nC(5) + 1
+   else 
+            nC(6)= nC(6) + 1
+   end if
+   
                                     if( Gab_min .lt. Threshold ) then
                                         iSegm= iSegm + 1
                                         distanceSegms( iSegm )= Gab_min
@@ -126,6 +144,14 @@ end do
     end do
 end do
 
+       write(*,100),  "###(", nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+100    format( A4, 6I9 )
+       write(301,101),"###(", nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+101    format( A4, 6I9 )
+       write(308,101),"###(", nC(1), nC(2), nC(3), nC(4), nC(5), nC(6) 
+102    format( A4, 6I9 )
+pause
+
 deallocate( distance_neighbors )                         !2018/11/25 delete
 
 end subroutine find_neighbors_new   
@@ -147,9 +173,11 @@ integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj,
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
-real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
+real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon, times
 real(8)                                :: distanceFactor, ex_vol_const, fric_coeff
+integer(8), dimension(10)  ::nC
 
+times=         simParameters%time                                !2018/11/19 add
 nbr_bins       = simParameters%nbr_bins
 r_fiber        = simParameters%r_fiber                               
 distanceFactor = simParameters%distanceFactor
@@ -171,6 +199,9 @@ allocate( distance_neighbors( ubound(hinges,1), nbr_neighbors ) )
 
 neighbor_list=      0
 distance_neighbors= 1e10
+
+nC= 0
+
 
 do i=1, ubound( fibers, 1 )
 	do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
@@ -205,7 +236,21 @@ do i=1, ubound( fibers, 1 )
 			                        ghost_hingeB%X_i= B2
                                     
 					                call dist_segments( B1, B2, A1, A2, s, t, Gab, Gab_min ) !2018/08/02 修正改寫
-                                    
+
+   if(      Gab_min .lt. 1.d0*r_fiber ) then
+            nC(1)= nC(1) + 1
+   else if( Gab_min .lt. 2.d0*r_fiber ) then
+            nC(2)= nC(2) + 1
+   else if( Gab_min .lt. 3.d0*r_fiber ) then
+            nC(3)= nC(3) + 1
+   else if( Gab_min .lt. 4.d0*r_fiber ) then
+            nC(4)= nC(4) + 1
+   else if( Gab_min .lt. 5.d0*r_fiber ) then
+            nC(5)= nC(5) + 1
+   else 
+            nC(6)= nC(6) + 1
+   end if
+
                                     iSegm= iSegm + 1
                                     flag= .false.
                                     m= 1
@@ -247,6 +292,14 @@ do i=1, ubound( fibers, 1 )
 
     end do
 end do
+
+!       write(*,100),  "###(", nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+!100    format( A4, 6I9 )
+!       write(301,101),"###(", nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
+!101    format( A4, 6I9 )
+       write(311,102),"###(", 1.d6*times, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6) 
+102    format( A4, F12.0, 6I9 )
+!pause
 
 deallocate( distance_neighbors )                         !2018/11/25 delete
 

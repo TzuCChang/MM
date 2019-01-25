@@ -17,6 +17,8 @@ open(302,file='OUTPUT/FiberLengthDistribution.txt')
 open(303,file='OUTPUT/OrientationTensor.txt')
 open(306,file='OUTPUT/a11.txt')
 open(307,file='OUTPUT/Ln.txt')
+open(308,file='OUTPUT/CurvatureDistrivution.txt')   !20181229 add
+open(311,file='OUTPUT/DistanceDistrivution.txt')    !20181229 add
 open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
 open(6,  file='OUTPUT/forces.out')
@@ -44,6 +46,8 @@ close(302)
 close(303)
 close(306)
 close(307)
+close(308)  !20181229 add
+close(311)  !20181229 add
 close (3) 
 close (5)
 close (6)
