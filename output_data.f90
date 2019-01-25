@@ -1,12 +1,73 @@
 !======================================================================
 module m_OutputData   !2018/07/21  change name
-    
 use m_DataStructures
+use omp_lib
+
 implicit none
 contains
 
-subroutine output_data( fibers, hinges, simParameters )  !2018/10/10 修正
+!======================================================================
 
+subroutine output_OpenFiles(  simParameters )  !2018/11/25
+type(simulationParameters) :: simParameters
+
+open(300,file='OUTPUT/meanLength.txt')
+open(301,file='OUTPUT/OutputMessage.txt')
+open(302,file='OUTPUT/FiberLengthDistribution.txt')
+open(303,file='OUTPUT/OrientationTensor.txt')
+open(306,file='OUTPUT/a11.txt')
+open(307,file='OUTPUT/Ln.txt')
+open(3,  file='OUTPUT/positions.out')
+open(5,  file='OUTPUT/vels.out')
+open(6,  file='OUTPUT/forces.out')
+
+
+print *,      "Maximum number of threads",    omp_get_max_threads()  
+print *,      "Number of threads being used", omp_get_num_threads()
+#ifdef TENSOR            
+print *,      "Hydrodynamic representation being used is TENSOR"
+#else
+print *,      "Hydrodynamic representation being used is BEAD"
+#endif
+print *,      "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
+
+write(301,*), "Maximum number of threads",    omp_get_max_threads() 
+write(301,*), "Number of threads being used", omp_get_num_threads()
+#ifdef TENSOR            
+write(301,*), "Hydrodynamic representation being used is TENSOR"
+#else
+write(301,*), "Hydrodynamic representation being used is BEAD"
+#endif
+write(301,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
+write(300,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
+write(306,*), "Time(micro sec.), a11"                                         !2018/10/27
+write(307,*), "Time(micro sec.), Ln(mm)"                                      !2018/10/27
+
+end subroutine output_OpenFiles
+
+!======================================================================
+
+subroutine output_CloseFiles(  simParameters )  !2018/11/25
+type(simulationParameters)  :: simParameters
+
+write(*,*),   "Time Elpased(1)",  OMP_get_wtime()-simParameters%start, "s"
+write(301,*), "Time Elpased(1)",  OMP_get_wtime()-simParameters%start, "s"
+
+close(300)
+close(301)
+close(302)
+close(303)
+close(306)
+close(307)
+close (3) 
+close (5)
+close (6)
+
+end subroutine output_CloseFiles
+
+!======================================================================
+
+subroutine output_data( fibers, hinges, simParameters )  !2018/10/10 修正
 type(simulationParameters)               :: simParameters
 type (fiber), dimension(:), allocatable  :: fibers
 type(rod),    dimension(:), allocatable  :: hinges
@@ -37,6 +98,7 @@ integer(8)                               :: i, j, k, n
             
 end subroutine output_data
 
+!======================================================================
 
 subroutine output_Length( fibers, hinges, simParameters )  !2018/10/29 修正
 
@@ -45,10 +107,10 @@ type(fiber), dimension(:),  allocatable :: fibers
 type(rod),   dimension(:),  allocatable :: hinges
 
 real(8), dimension(3)       :: coord
-real(8)                     :: FiberLength_Total, FiberLength, SegmentLength, t
-real                        :: length, lengthAvg
+real(8)                     :: FiberLength_Total, FiberLength, SegmentLength, t, tt
+real(8)                     :: length, lengthAvg
 integer(8)                  :: i, j, k, mSegments
-integer                     :: mm, nn, tt
+integer(8)                  :: mm, nn
 
     t= simParameters%time
     
@@ -70,31 +132,34 @@ integer                     :: mm, nn, tt
        
     end do
 
-    tt= t*1.e6 + 0.5                              !2018/08/11   化成整數,單位=micro seconds
+    tt= t*1.e6 + 0.0                              !2018/08/11   化成整數,單位=micro seconds
     mm= mSegments                                 !2018/08/11   total segments number
     nn= ubound(fibers,1)                          !2018/08/11   total Fiber number
     length= 1000*FiberLength_Total                !2018/09/22   total Fiber length(mm)
     lengthAvg= 1000*FiberLength_Total/nn          !2018/09/22   mean  Fiber length(mm)
 
-    write(300,*), tt, nn, mm, length, lengthAvg
-	write(307,*), tt,",", lengthAvg                   !2018/10/27   new output    
-  
-    print *,      "@@@", tt, nn, mm, length, lengthAvg
-    write(301,*), "@@@", tt, nn, mm, length, lengthAvg
-!   pause
+    write(300,100), tt, nn, mm, length, lengthAvg
+100 format(F12.0,2I10,2F15.6)
+	write(307,110), tt,",", lengthAvg                   !2018/10/27   new output    
+110 format(F14.2,A1,F12.6)
+    
+    write(*,200),"@@@", tt, nn, mm, length, lengthAvg
+200 format(A4,F14.2,2I10,2F15.6)
+    write(301,210),"@@@", tt, nn, mm, length, lengthAvg
+210 format(A4,F14.2,2I10,2F15.6)
+!pause
 
 end subroutine output_Length
 
-
 !======================================================================
+
 subroutine output_LengthDistribution( fibers, indexA, simParameters )  !2018/10/29 修正
 
 type(simulationParameters)              :: simParameters
 type(fiber), dimension(:), allocatable  :: fibers
 integer(8),  dimension(:), allocatable  :: indexA
-real(8)      :: t, tt
 integer(8)   :: i, j, maxSegments
-
+real(8)      :: t, tt
 
 t= simParameters%time
 tt= t*1.d6
@@ -125,7 +190,7 @@ maxSegments= ubound(indexA,1)
 !100 format( F18.8, I10, I10 )
     
 write(302,200),  tt, ubound(fibers,1), maxSegments
-200 format( F18.8, I10, I10 )
+200 format( F14.2, I8, I10 )
 
 do j=1, maxSegments
     
@@ -139,17 +204,17 @@ end do
 
 end subroutine output_LengthDistribution
 
-subroutine output_OrientationTensor( fibers, hinges, simParameters )  !2018/10/12 新增
+!======================================================================
 
+subroutine output_OrientationTensor( fibers, hinges, simParameters )  !2018/10/12 新增
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 type(simulationParameters)               :: simParameters
-
 real(8),     dimension(3,3)              :: AA
 real(8),     dimension(3)                :: ra
 real(8)      :: t, tt, length, trace_A
 integer(8)   :: ia, ja,  mm
-integer      :: i, j
+integer(8)   :: i, j
 
 t= simParameters%time
 tt= t*1.d6
@@ -181,26 +246,28 @@ simParameters%AA= AA                             !2018/10/12 新增
 !print *, "###", tt, ubound (fibers,1), simParameters%nStep_Total
 
       write(*,103),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
-103   format( A4, F15.2, I9, I10 )                  !2018/11/18  new output
+103   format( A4, F14.2, I10, I10 )                  !2018/11/18  new output
       
       print *, AA
 
       write(301,104),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
-104   format( A4, F15.2, I9, I10 )                  !2018/11/18  new output
+104   format( A4, F14.2, I10, I10 )                  !2018/11/18  new output
    
       write(301,*), AA
 
 !      write(303,*), tt, ubound (fibers,1)
       write(303,105),tt ,ubound(fibers,1)
-105   format( F18.8, I10 )                  !2018/11/18  new output
+105   format( F14.2, I8 )                  !2018/11/18  new output
       
       write(303,*), AA
 
       write(306,106), tt, AA(1,1)                !2018/11/18  new output
-106   format( F18.8, F10.6 )                  !2018/11/18  new output
+106   format( F14.2,2X, F10.6 )                  !2018/11/18  new output
 !pause
 
 end subroutine output_OrientationTensor
+
+!======================================================================
 
 subroutine output_PositionsForTheMomemt ( fibers, hinges )   !2018/10/12
 type(fiber), dimension(:),   allocatable :: fibers
@@ -231,14 +298,15 @@ close(304)
 
 end subroutine output_PositionsForTheMomemt
 
+!======================================================================
+
 subroutine output_FiberLengthModification( fibers, hinges )  !2018/09/22  add
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
-real(8)                               :: length, FiberLength, ScaleFactor
+logical                               :: periodic_boundary
 integer(8)                            :: i,j,k,l,jp1
 real(8), dimension(3)                 :: box_size, coord
-logical                               :: periodic_boundary
-
+real(8)                               :: length, FiberLength, ScaleFactor
 
 do i=1, ubound (fibers,1)   !2018/09/22  add
     
@@ -273,20 +341,17 @@ end do
 
 end subroutine output_FiberLengthModification
 
+!======================================================================
 
-subroutine output_Initial_Positions_New( fibers, hinges, simParameters )   !2018/09/22
-        
+subroutine output_Initial_Positions_New( fibers, hinges, simParameters )   !2018/09/22    
 implicit none
-
 type(simulationParameters)             :: simParameters
 type(fiber), dimension(:), allocatable :: fibers
 type(rod),   dimension(:), allocatable :: hinges
-
 real(8), dimension(3) :: box_size, coord
 real(8)               :: del_X, del_Y, del_Z, x, y, z
-
-integer               :: mm1, mm2, mm3, mm1_A, mm1_B, mm2_A, mm2_B, mm3_A, mm3_B, ix, iy, iz
-integer               :: i, j, N_Fiber, N_hinge
+integer(8)            :: mm1, mm2, mm3, mm1_A, mm1_B, mm2_A, mm2_B, mm3_A, mm3_B, ix, iy, iz
+integer(8)            :: i, j, N_Fiber, N_hinge
 
 box_size= simParameters%box_size
 
@@ -373,6 +438,8 @@ close( 305 )
 
 end subroutine output_Initial_Positions_New
 
+!======================================================================
+
 subroutine output_DynamicP_1848( flowcase_1848, simParameters )               !2018/10/11 
 
 implicit none
@@ -403,10 +470,9 @@ integer(8)                                 :: h                               !2
 
 end subroutine output_DynamicP_1848  !2018/10/11 change name
 
-
 !======================================================================
-subroutine output_minmax_hinges( fibers, hinges ) !2018/10/27 change name
 
+subroutine output_minmax_hinges( fibers, hinges ) !2018/10/27 change name
 type(fiber), allocatable, dimension(:) :: fibers
 type(rod)  , allocatable, dimension(:) :: hinges
 real(8), dimension(3)                  :: coord, min_coor, max_coor
@@ -477,10 +543,10 @@ write(301,*),"max ", max_coor
 write(301,*),"@@@"
 !print *,"@@@"
 
-
 end subroutine  output_minmax_hinges
 
 !======================================================================
+
 subroutine output_minmax_segments( fibers, hinges ) !2018/10/27 change name
 
 type(fiber), allocatable, dimension(:) :: fibers
@@ -553,18 +619,17 @@ write(301,*),"@@@"
 
 end subroutine  output_minmax_segments
 
-subroutine output_OrientationTensor_OLD( fibers, hinges, simParameters )  !2018/10/31 修正
+!======================================================================
 
+subroutine output_OrientationTensor_OLD( fibers, hinges, simParameters )  !2018/10/31 修正
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
 type(simulationParameters)               :: simParameters
-
 real(8),     dimension(3,3)     :: AA, BB
 real(8),     dimension(3)       :: ra
-
 real(8)      :: t, length, trace_A, trace_B, B11_bar
 integer(8)   :: ia, ja,  mm, nn, nbr_hinges
-integer      :: tt, i, j
+integer(8)   :: tt, i, j
 
 
       write(*,*),"@@@("
@@ -631,7 +696,6 @@ write(301,*), AA
 write(303,*), tt, ubound (fibers,1)
 write(303,*), AA
 write(306,*), tt,",", AA(1,1)                 !2018/10/27   new output
-
 !pause
 
 end subroutine output_OrientationTensor_OLD

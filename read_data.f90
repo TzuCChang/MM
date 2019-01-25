@@ -23,7 +23,7 @@ real(8)                                :: Duration, Shearrate, Viscosity
 real(8)                                :: FiberLength, FiberVolume, BoxVolume, VolumeFraction
 real(8)                                :: E_Young, min_curv, r_fiber, ex_vol_const
 real(8)                                :: gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor
-real(8), parameter                     :: pi=3.141592
+real(8), parameter                     :: pi= 3.141592653589793d0
 
 namelist /input/ recover_simulation,&
                  fric_coeff,&
@@ -52,6 +52,8 @@ namelist /input/ recover_simulation,&
     read(1,nml = input)
 	close(1)
 
+    simParameters%pi= pi                              !2018/11/25 add
+    
     simParameters%IsPeriodicY = periodic_boundary     !2018/10/29 IsPeriodicY true(Periodic) or false(Wall)
     
     simParameters%periodic_boundary = .true.          !2018/10/09 add
@@ -252,6 +254,17 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
 end do
 end do
 
+if( simParameters%recover_simulation.eqv..true. ) then                        !2018/11/25  add
+	n= simParameters%frame*simParameters%writ_period + 0                      !2018/11/25  add
+else 
+	n= 0                                                                      !2018/11/25  add
+	simParameters%frame= 1                                                    !2018/11/25  add
+    simParameters%nStep_Total= 0                                              !2018/11/25  add
+end if
+simParameters%n= n                                                            !2018/11/25  add
+simParameters%time = simParameters%dt*n                                       !2018/11/25  add
+
+
         FiberVolume= 3.14159*r_fiber*r_fiber*FiberLength
         BoxVolume=   box_size(1)*box_size(2)*box_size(3)
         VolumeFraction= FiberVolume/BoxVolume
@@ -266,18 +279,9 @@ end do
         write(301,*),"@@@( BoxVolume=      ",BoxVolume
         write(301,*),"@@@( VolumeFraction= ",VolumeFraction
         
-	!do i=1, nbr_fibers
-	!	print*,"Fiber Info:", fibers(i)%first_hinge,fibers(i)%nbr_hinges
-	!end do
-
-	!do i=1, ubound(hinges,1)
-	!	print *, hinges(i)%X_i(1), hinges(i)%X_i(2), hinges(i)%X_i(3)
-	!end do
-	!print *,"FRAME", frame
-    print *,     "IsPeriodicY    ", periodic_boundary
-    write(301,*),"IsPeriodicY    ", periodic_boundary
-!pause    
-
+        write(*,*),  "IsPeriodicY    ", periodic_boundary
+        write(301,*),"IsPeriodicY    ", periodic_boundary
+!pause
 
 end subroutine read_data
 

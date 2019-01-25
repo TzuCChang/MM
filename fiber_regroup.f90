@@ -24,9 +24,9 @@ type(cell),    dimension(:), allocatable :: cells
 logical                                  :: allow_breakage
 
 integer(8), dimension(:,:), allocatable  :: neighbor_list
-integer,    dimension(:,:), allocatable  :: hinge_index
-integer,    dimension(:),   allocatable  :: ghost_segment_index
-integer,    dimension(3)                 :: indx, Nbr_bins
+integer(8), dimension(:,:), allocatable  :: hinge_index
+integer(8), dimension(:),   allocatable  :: ghost_segment_index
+integer(8), dimension(3)                 :: indx, Nbr_bins
 integer(8)                               :: i, j, k, m, nbr_segments, nbr_neighbors, ind, nbr_GhostSegments !error 2018/07/12 integer(8)
 
 real(8), dimension(3)                    :: r, box_size,min_coor, max_coor , center

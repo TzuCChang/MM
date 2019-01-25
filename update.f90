@@ -9,12 +9,11 @@ subroutine update_periodic( fibers, hinges, simParameters )  !2018/10/09 change
 
 type(simulationParameters)            :: simParameters
 type(fiber) , dimension(:)            :: fibers
-type (rod), dimension(:)              :: hinges
+type (rod),   dimension(:)            :: hinges
 logical                               :: periodic_boundary
-
-real(8)                               :: dt, cx, cy, cz, dist2, dX, t, gamma_dot, dist2_max, displ_max, ratio, dt_Step
 integer(8)                            :: i,j,k,l,jp1, iStep, nStep, mStep, nStep_max
-real(8), dimension(3)                 :: box_size, coord
+real(8),      dimension(3)            :: box_size, coord
+real(8)                               :: dt, cx, cy, cz, dist2, dX, t, gamma_dot, dist2_max, displ_max, ratio, dt_Step
 
 periodic_boundary = simParameters%periodic_boundary
 
@@ -207,11 +206,9 @@ type(simulationParameters)            :: simParameters
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
 logical                               :: periodic_boundary
-
-real(8)                               :: cx, cy, cz
 integer(8)                            :: i,j,k,l,jp1
 real(8), dimension(3)                 :: box_size, coord
-
+real(8)                               :: cx, cy, cz
 
 periodic_boundary = simParameters%periodic_boundary
 box_size          = simParameters%box_size
@@ -326,10 +323,9 @@ subroutine update_robust(fibers, hinges, dt)
 implicit none
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
-real(8)                               :: dt, deltaX, deltaY, delta
 integer(8)                            :: i,j
 real(8), dimension(3)                 :: dir_vec
-
+real(8)                               :: dt, deltaX, deltaY, delta
 
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(I, J, DIR_VEC)
 !$OMP DO 
@@ -359,9 +355,8 @@ end subroutine update_robust
 !*************************************************
 subroutine update(hinges, dt)
 type (rod), dimension(:)              :: hinges
-real(8)                               :: dt
 integer(8)                            :: i
-
+real(8)                               :: dt
 
 do i=1, ubound(hinges,1)
 	if (hinges(i)%is_stationary==0) then

@@ -97,7 +97,7 @@ type(fiber), dimension(:)      :: fibers
 type(rod), dimension(:)        :: hinges
 logical                        :: is_fric_wall
 
-integer                  :: i, j, k
+integer(8)               :: i, j, k
 real(8)                  :: ex_vol_const, dist, r_fiber, vec_to_wall, threshold
 real(8), dimension(3)    :: box_size, Exc_Vol_Force_Partial, r, v_rel, X_fiber
 real(8), dimension(2)    :: wall_position
@@ -267,7 +267,7 @@ integer(8)              :: i,j, k,l, ind1, ind2
 
 real(8), dimension(3)   :: void, Exc_Vol_Force_Partial, v_rel,  r1, r2, Gab
 real(8)                 :: r_fiber, ex_vol_const, fric_coeff, Sab, fac,  s, t, Gab_min
-real(8), parameter      :: pi=3.141592
+real(8), parameter      :: pi= 3.141592653589793d0
 
 
     r1= hingesa2%X_i - hingesa1%X_i 

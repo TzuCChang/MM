@@ -7,23 +7,18 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine hinges_damage( fibers, hinges, simParameters )
-
+subroutine hinges_curv_distribution( fibers, hinges, simParameters )  !2018/11/20 add
 implicit none
 type(simulationParameters)                :: simParameters
 type (fiber), dimension(:), allocatable   :: fibers, fibers_temp
 type (rod)  , dimension(:), allocatable   :: hinges, hinges_temp
-real(8)        :: max_alpha, r_fiber, fac, alpha,min_curv,curv, t
+real(8)        :: min_curv,curv, t
 integer(8)     :: k, i, j, m, n
 integer(8), dimension(10)  ::nC
 
- min_curv = simParameters%min_curv
- r_fiber  = simParameters%r_fiber
- t= simParameters%time                                              !2018/11/19 add
+min_curv = simParameters%min_curv
+t=         simParameters%time                                !2018/11/19 add
 
-!fac=0.07*r_fiber   !2018/09/13 origion
-
-fac=0.000001*r_fiber  !2018/09/22 修正  fac=0.0001*r_fiber
 
 do i=1, ubound(hinges,1)
 	hinges(i)%is_broken    =.false.
@@ -52,48 +47,60 @@ do i=1, ubound(fibers,1)
 	end if
 end do
 
+simParameters%k= k
+
 do i=1, ubound(fibers,1)
 	hinges(fibers(i)%first_hinge)%is_separated=.true.
 end do
 
-nC= 0                                                       !2018/11/19 add
-do i=1, ubound(hinges,1)                                    !2018/11/19 add
-   if(      hinges(i)%curv .lt. 1.d0*min_curv ) then        !2018/11/19 add
-            nC(1)= nC(1) + 1                                !2018/11/19 add
-   else if( hinges(i)%curv .lt. 2.d0*min_curv ) then        !2018/11/19 add
-            nC(2)= nC(2) + 1                                !2018/11/19 add
-   else if( hinges(i)%curv .lt. 3.d0*min_curv ) then        !2018/11/19 add
-            nC(3)= nC(3) + 1                                !2018/11/19 add
-   else if( hinges(i)%curv .lt. 4.d0*min_curv ) then        !2018/11/19 add
-            nC(4)= nC(4) + 1                                !2018/11/19 add
-   else if( hinges(i)%curv .lt. 5.d0*min_curv ) then        !2018/11/19 add
-            nC(5)= nC(5) + 1                                !2018/11/19 add
-   else                                                     !2018/11/19 add
-            nC(6)= nC(6) + 1                                !2018/11/19 add
-   end if                                                   !2018/11/19 add
+nC= 0                                                      
+do j=1, ubound(hinges,1)                                    
+   if(      hinges(j)%curv .lt. 1.d0*min_curv ) then       
+            nC(1)= nC(1) + 1                               
+   else if( hinges(j)%curv .lt. 2.d0*min_curv ) then       
+            nC(2)= nC(2) + 1                                
+   else if( hinges(j)%curv .lt. 3.d0*min_curv ) then        
+            nC(3)= nC(3) + 1                               
+   else if( hinges(j)%curv .lt. 4.d0*min_curv ) then        
+            nC(4)= nC(4) + 1                                
+   else if( hinges(j)%curv .lt. 5.d0*min_curv ) then        
+            nC(5)= nC(5) + 1                                
+   else                                                     
+            nC(6)= nC(6) + 1                                
+   end if                                                   
 end do
+
        write(*,100),  "@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
 100    format( A4, F12.2, 6I9 )
        write(301,101),"@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
 101    format( A4, F12.2, 6I9 )
-!pause
-
-
+       write(308,101),"@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6) 
+102    format( A4, F12.2, 6I9 )
 
 !call hinges_SortOrder_curv( hinges )   !2018/10/05  關掉, 量大, 時間花太長
 
-!PRINT *, "Monitor Hinges"
-!do i=1, ubound(hinges,1)
-!	print *, hinges(i)%X_i, hinges(i)%is_separated, hinges(i)%is_broken
-!end do
-!PRINT *, "Monitor Fibers"
-!do i=1, ubound(fibers,1)
-!	print*, fibers(i)%first_hinge, fibers(i)%nbr_hinges
-!end do
+
+end subroutine  hinges_curv_distribution
+
+
+subroutine hinges_damage( fibers, hinges, simParameters )
+
+implicit none
+type(simulationParameters)                :: simParameters
+type (fiber), dimension(:), allocatable   :: fibers, fibers_temp
+type (rod)  , dimension(:), allocatable   :: hinges, hinges_temp
+real(8)        :: fac
+integer(8)     :: k, i, j, m, n
+integer(8), dimension(10)  ::nC
+
+k= simParameters%k                                                 !2018/11/23
 
 allocate(hinges_temp(ubound(hinges,1)+k))
 allocate(fibers_temp(ubound(fibers,1)+k))
+
 !print *, "Neo Ubound *****", (ubound(fibers,1)+k), (ubound(hinges,1)+k)
+
+fac=0.000001*simParameters%r_fiber  !2018/11/23 修正 fac=0.0001*r_fiber,(2018/09/13 origion fac=0.07*r_fiber)
 
 k=0
 
@@ -114,9 +121,6 @@ do i=1, ubound(fibers_temp,1)-1
 end do
 fibers_temp(ubound(fibers_temp,1))%nbr_hinges=ubound(hinges_temp,1)-fibers_temp(ubound(fibers_temp,1))%first_hinge+1
 
-!do i=1, ubound(fibers_temp,1)
-!	print *," NEON FIBERS", fibers_temp(i)%first_hinge
-!end do
 
 k=1
 do i=1, ubound(hinges,1)  !2018/09/22  修正錯誤
@@ -162,22 +166,8 @@ fibers=fibers_temp
 deallocate(hinges_temp)
 deallocate(fibers_temp)
 
-!PRINT *, "Monitor Hinges"
-!do i=1, ubound(hinges,1)
-!	print *, hinges(i)%X_i
-!end do
-!PRINT *, "Monitor Fibers"
-!do i=1, ubound(fibers,1)
-!	print *, fibers(i)%first_hinge, fibers(i)%nbr_hinges
-!end do
-
-do i=1, ubound(hinges,1)
-	hinges(i)%alpha    =0
-end do
 
 end subroutine hinges_damage
-
-
 
 
 
@@ -245,10 +235,6 @@ deallocate(indexA)
 deallocate(indexB)
 
 end subroutine  hinges_SortOrder_curv
-
-
-
-
 
 
 

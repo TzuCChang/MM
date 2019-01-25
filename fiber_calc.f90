@@ -108,9 +108,10 @@ real(8), dimension(1,3):: X_local_mat_T, u_fluid_mat_T
 real(8), dimension(3,3):: Id
 real(8), dimension(3,3,3):: eps
 integer(8)             :: i, j, nbr_fibers_per_segment, flow_case, aa, k, l_
-real(8)                :: r_fiber, viscosity, gamma_dot, epsilon_dot, segment_length
-real(8), parameter     :: pi=3.141592
+real(8)                :: r_fiber, viscosity, gamma_dot, epsilon_dot, segment_length, pi   !2018/11/25
 type(simulationParameters)  :: simParameters
+
+pi= simParameters%pi
 
 hinge1%A =0
 hinge1%H =0

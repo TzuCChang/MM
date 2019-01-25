@@ -8,14 +8,7 @@ use omp_lib
 implicit none
 contains
 
-subroutine find_neighbors_new( fibers,&
-                               hinges,&
-                               ghost_segments,&
-                               nbr_neighbors,&
-                               neighbor_list,&
-                               distance_neighbors,&
-                               cells,&
-                               simParameters )
+subroutine find_neighbors_new( fibers, hinges, ghost_segments, neighbor_list, cells, simParameters )  !2018/11/25 change
 
 type(simulationParameters)              :: simParameters
 type(cell),  dimension(:), allocatable  :: cells
@@ -27,7 +20,7 @@ logical                                 :: flag
 
 integer(8), dimension(:,:), allocatable:: neighbor_list
 integer(8), dimension(:),   allocatable:: IndexSegms
-integer,    dimension(3)               :: i_cell, nbr_bins, indx
+integer(8), dimension(3)               :: i_cell, nbr_bins, indx
 integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error ­×¥¿2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
@@ -39,6 +32,7 @@ real(8)                                :: distanceFactor, ex_vol_const, fric_coe
 nbr_bins       = simParameters%nbr_bins              !2018/10/10
 r_fiber        = simParameters%r_fiber               !2018/10/10
 distanceFactor = simParameters%distanceFactor        !2018/10/10
+nbr_neighbors  = simParameters%nbr_neighbors         !2018/11/25
 
 epsilon= 3*tiny(1d0)
 
@@ -49,10 +43,6 @@ ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
 
 if( allocated(  neighbor_list ) ) then
 	deallocate( neighbor_list )
-end if
-
-if( allocated(  distance_neighbors ) ) then
-	deallocate( distance_neighbors )
 end if
 
 allocate( neighbor_list(      ubound(hinges,1), nbr_neighbors ) )
@@ -136,16 +126,12 @@ end do
     end do
 end do
 
+deallocate( distance_neighbors )                         !2018/11/25 delete
+
 end subroutine find_neighbors_new   
                  
                                                   
-subroutine find_neighbors_new_original( fibers,&
-                                        hinges,&
-                                        ghost_segments,&
-                                        neighbor_list,&
-                                        distance_neighbors,&
-                                        cells,&
-                                        simParameters )
+subroutine find_neighbors( fibers, hinges, ghost_segments, neighbor_list, cells, simParameters )   !2018/11/25 change
 
 type(simulationParameters)             :: simParameters
 type(cell),  dimension(:), allocatable :: cells
@@ -156,7 +142,7 @@ type(segment), dimension(:)            :: ghost_segments
 logical                                :: flag
 
 integer(8), dimension(:,:), allocatable:: neighbor_list
-integer,    dimension(3)               :: i_cell, nbr_bins, indx
+integer(8), dimension(3)               :: i_cell, nbr_bins, indx
 integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error ­×¥¿2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
@@ -178,10 +164,6 @@ ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
 
 if( allocated(  neighbor_list ) ) then
 	deallocate( neighbor_list )
-end if
-
-if( allocated(  distance_neighbors ) ) then
-	deallocate( distance_neighbors )
 end if
 
 allocate( neighbor_list(      ubound(hinges,1), nbr_neighbors ) )
@@ -266,7 +248,9 @@ do i=1, ubound( fibers, 1 )
     end do
 end do
 
-end subroutine find_neighbors_new_original
+deallocate( distance_neighbors )                         !2018/11/25 delete
+
+end subroutine find_neighbors
 
 subroutine SortOrder( dinstSegm, indexSegm, mSegm )
 

@@ -40,10 +40,10 @@ end subroutine motion_fiber
 
 
 subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
-    ! Copy a range of a regular matrix to a banded matrix
-    real(8), dimension(:,:), allocatable :: AB
-    real(8)                              ::  A(:,:)
-    integer(8)                           :: i1, i2, j1, j2, KL, KU, nbRows, ii, jj, j, i
+! Copy a range of a regular matrix to a banded matrix
+real(8), dimension(:,:), allocatable :: AB
+real(8)                              ::  A(:,:)
+integer(8)                           :: i1, i2, j1, j2, KL, KU, nbRows, ii, jj, j, i
     
     jj =1
     do j=j1, j2
@@ -68,9 +68,9 @@ real(8), dimension(:,:), allocatable :: Amat, bvec, xvec, AB
 real(8), dimension(9,15)             :: mat
 real(8), dimension(9,1)              :: vec
 real(8)                              :: r_bead, drag_coeff_vel, drag_coeff_omega, finish2, start2, timex
-real(8), parameter                   :: pi=3.141592
+real(8), parameter                   :: pi= 3.141592653589793d0
 integer(8)                           :: i, k, j, l, kl, ku, minSegs 
-integer                              :: n, ii, jj
+integer(8)                           :: n, ii, jj
 
 
     drag_coeff_vel  = 6d0*pi*r_bead

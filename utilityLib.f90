@@ -11,8 +11,8 @@ contains
 recursive subroutine QsortC(A, Targ)   !2018/08/02 從fiber_regroup 搬過來
 
 type (segment), intent(in out), dimension(:) :: Targ
-integer,        intent(in out), dimension(:) :: A  
-integer                                      :: iq
+integer(8),     intent(in out), dimension(:) :: A  
+integer(8)                                   :: iq
 
   if(size(A) > 1) then
      call Partition(A, Targ, iq)
@@ -27,11 +27,11 @@ subroutine Partition(A, Targ, marker)  !2018/08/02 從fiber_regroup 搬過來
 
 type(segment), intent(in out), dimension(:) :: Targ
 type(segment)                               :: tempTarg  
-integer,       intent(in out), dimension(:) :: A  
-integer,       intent(out)                  :: marker
-integer                                     :: i, j
-real                                        :: temp
-real                                        :: x      ! pivot point
+integer(8),    intent(in out), dimension(:) :: A  
+integer(8),    intent(out)                  :: marker
+integer(8)                                  :: i, j
+real(8)                                     :: temp
+real(8)                                     :: x      ! pivot point
   
   x = A(1)
   
@@ -299,7 +299,7 @@ implicit none
 real(8)                :: a,b,c,l1,l2,l2nb,n,rad,dotp,curv,scale1,scale2,t
 real(8), dimension(3)  :: center, p1,p2,p3,v1,v2,v1n,v2n,v2nb
 real(8), dimension(2)  :: p3_2d
-integer                :: i
+integer(8)             :: i
 
 center = 0
 rad    = 0

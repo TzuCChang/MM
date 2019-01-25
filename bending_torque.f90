@@ -70,7 +70,7 @@ subroutine bending_torque_localhinge (T_b, pt1, pt2, pt3, E_Young, Inertia_Momen
 implicit none
 real(8), dimension(3) :: pt1, pt2, pt3, vec1, vec2, e_theta, cross_product, T_b
 real(8)               :: l1, l2, k_bending, E_Young, Inertia_Moment, alpha, beta,  eps
-real(8),parameter     :: pi=3.14159265358979
+real(8),parameter     :: pi= 3.141592653589793d0                                        !2018/11/25  change
 
 eps=10*tiny(E_Young)
 

@@ -19,7 +19,7 @@ type(segment), dimension(:), allocatable  :: ghost_segments
 real(8), dimension(3)       :: box_size, coord
 real(8)                     :: del_X, del_Y, del_Z, dX, gamma_dot, time     !2018/10/02
 
-integer                     :: mm1, mm2, mm3, ix, iy, iz    !2018/10/02
+integer(8)                  :: mm1, mm2, mm3, ix, iy, iz    !2018/10/02
 integer(8)                  :: i, j, k, m, n
 
 
@@ -91,7 +91,7 @@ type(simulationParameters)                :: simParameters
 real(8)                 :: del_X, del_Y, del_Z, dX, gamma_dot, time
 real(8),dimension(3)    :: box_size
 integer(8)              :: i, j, k
-integer                 :: ix, iy, iz
+integer(8)              :: ix, iy, iz
 
 !$OMP PARALLEL DEFAULT(SHARED) 
 !$OMP DO PRIVATE (i, j, k)
@@ -145,7 +145,7 @@ type(simulationParameters)                :: simParameters
 real(8),    dimension(3)    :: box_size, coord
 real(8)                     :: FiberLength, maxLength
 integer(8)                  :: i, j, nbr_segments, numClones, nbr_GhostSegments
-integer                     :: mm1, mm2, mm3
+integer(8)                  :: mm1, mm2, mm3
 
 
 box_size=      simParameters%box_size
@@ -186,20 +186,26 @@ box_size=      simParameters%box_size
      
      allocate( ghost_segments(nbr_GhostSegments) ) 
 
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(1)), real( 0.1d0 + 0.5d0*maxLength/box_size(1) ), mm1  !2018/10/08
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(2)), real( 0.1d0 + 0.5d0*maxLength/box_size(2) ), mm2  !2018/10/08
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(3)), real( 0.1d0 + 0.5d0*maxLength/box_size(3) ), mm3  !2018/10/08
-     print *,"@@@"
-     print *,"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
-     print *,"@@@"
-     
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(1)), real( 0.1d0 + 0.5d0*maxLength/box_size(1) ), mm1  !2018/10/08
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(2)), real( 0.1d0 + 0.5d0*maxLength/box_size(2) ), mm2  !2018/10/08
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(3)), real( 0.1d0 + 0.5d0*maxLength/box_size(3) ), mm3  !2018/10/08
-     write(301,*), "@@@"
-     write(301,*), "@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
-     write(301,*), "@@@"     
-    !pause
+     write(*,100),"@@@ box_size(1)=",box_size(1),maxLength,(0.1d0+0.5d0*maxLength/box_size(1)),mm1  !2018/11/22
+100  format( A17,3E15.6,I6)
+     write(*,101),"@@@ box_size(2)=",box_size(2),maxLength,(0.1d0+0.5d0*maxLength/box_size(2)),mm2  !2018/11/22
+101  format( A17,3E15.6,I6)
+     write(*,102),"@@@ box_size(3)=",box_size(3),maxLength,(0.1d0+0.5d0*maxLength/box_size(3)),mm3  !2018/11/22
+102  format( A17,3E15.6,I6)
+     write(*,*),"@@@"
+     write(*,*),"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
+     write(*,*),"@@@"
+
+     write(301,200),"@@@ box_size(1)=",box_size(1),maxLength,(0.1d0+0.5d0*maxLength/box_size(1)),mm1  !2018/11/22
+200  format( A17,3E15.6,I6)
+     write(301,201),"@@@ box_size(2)=",box_size(2),maxLength,(0.1d0+0.5d0*maxLength/box_size(2)),mm2  !2018/11/22
+201  format( A17,3E15.6,I6)
+     write(301,202),"@@@ box_size(3)=",box_size(3),maxLength,(0.1d0+0.5d0*maxLength/box_size(3)),mm3  !2018/11/22
+202  format( A17,3E15.6,I6)
+     write(301,*),"@@@"
+     write(301,*),"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
+     write(301,*),"@@@"
+!pause
 
 end subroutine GhostSegments_Dimension
 
