@@ -58,13 +58,24 @@ end do
 end subroutine update
 !*************************************************
            
-subroutine update_periodic(fibers, hinges, dt, periodic_boundary, box_size, gamma_dot, t)  !2018/09/22
+subroutine update_periodic( fibers, hinges, simParameters )  !2018/10/09 change
+
+type(simulationParameters)            :: simParameters
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
+logical                               :: periodic_boundary
+
 real(8)                               :: dt, cx, cy, cz, dX, t, gamma_dot 
 integer(8)                            :: i,j,k,l,jp1
 real(8), dimension(3)                 :: box_size, coord
-logical                               :: periodic_boundary
+
+periodic_boundary = simParameters%periodic_boundary
+
+box_size  = simParameters%box_size
+gamma_dot = simParameters%gamma_dot
+t         = simParameters%time
+dt        = simParameters%dt
+
 
 
 do i=1, ubound (fibers,1)   !2018/09/22  add
@@ -175,8 +186,128 @@ if( periodic_boundary .eqv. .true. ) then
     
 end if
 
-
 end subroutine update_periodic
+
+
+subroutine update_periodic_Initial( fibers, hinges, simParameters ) !2018/10/09  add
+
+type(simulationParameters)            :: simParameters
+type(fiber) , dimension(:)            :: fibers
+type (rod), dimension(:)              :: hinges
+logical                               :: periodic_boundary
+
+real(8)                               :: cx, cy, cz
+integer(8)                            :: i,j,k,l,jp1
+real(8), dimension(3)                 :: box_size, coord
+
+
+periodic_boundary = simParameters%periodic_boundary
+box_size          = simParameters%box_size
+
+do i=1, ubound (fibers,1)   !2018/09/22  add
+	do j=fibers(i)%first_hinge, (fibers(i)%first_hinge+fibers(i)%nbr_hinges-2)
+		coord= hinges(j+1)%X_i-hinges(j)%X_i
+		hinges(j)%length2= sqrt( dot_product(coord, coord) )
+	end do
+end do
+
+
+do i=1, ubound(hinges,1)
+	if( hinges(i)%is_stationary==0 ) then
+		hinges(i)%X_i= hinges(i)%X_i + hinges(i)%v_i*0.d0  !2018/09/22 ­×¥¿
+	end if
+end do
+
+do i=1, ubound (fibers,1)  !2018/09/22  add
+	do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+       jp1= j+1
+       coord= hinges(jp1)%X_i - hinges(j)%X_i
+       coord= coord/(sqrt(dot_product(coord, coord)))
+       hinges(jp1)%X_i= hinges(j)%X_i + coord*hinges(j)%length2
+	end do
+end do
+
+
+if( periodic_boundary .eqv. .true. ) then
+
+	do i=1, ubound (fibers,1)
+
+		coord=0
+		k=0
+        ! Compute center of mass for fiber i
+		do l=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+			coord= coord + ( (hinges(l)%X_i+hinges(l+1)%X_i)/2d0 )
+			k=k+1
+		end do
+		coord= coord/real(k)
+        
+        ! Apply boundary conditions
+        ! if the center of mass of the fiber is outside of the box, move it accorddingly. 
+        ! based loosely on Non-Newtonian molecular Dynamics by Evans and Morriss, appendix B
+
+        cx= int( coord(1)/(box_size(1)/2d0) )
+        cy= int( coord(2)/(box_size(2)/2d0) )
+        cz= int( coord(3)/(box_size(3)/2d0) )
+        
+        do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+            if( hinges(j)%is_stationary==0 ) then     !2018/07/20   Error  hinges(i) change to hinges(j)
+                 hinges(j)%X_i(1)= hinges(j)%X_i(1) - cx*box_size(1)
+                 hinges(j)%X_i(2)= hinges(j)%X_i(2) - cy*box_size(2)
+                 hinges(j)%X_i(3)= hinges(j)%X_i(3) - cz*box_size(3)
+            end if
+        end do
+       
+!        
+!      if the coordinates of the center of mass are larger or smaller than the limits of the periodic box, move the fibers accordingly.
+!
+
+		coord=0
+		k=0
+        ! Compute center of mass for fiber i
+		do l=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+			coord= coord + ( (hinges(l)%X_i+hinges(l+1)%X_i)/2d0 )
+			k=k+1
+		end do
+		coord= coord/real(k)
+        
+        do l=1,3
+	       if( (coord(l)) .gt. (box_size(l)/2d0) ) then
+                do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+                   if (hinges(j)%is_stationary==0) hinges(j)%X_i(l)=hinges(j)%X_i(l)-box_size(l)  !2018/09/22  error hinges(i)
+                end do
+           else if (coord(l).lt. (-box_size(l)/2d0)) then 
+		        do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+			       if (hinges(j)%is_stationary==0) hinges(j)%X_i(l)=hinges(j)%X_i(l)+box_size(l) !2018/09/22  error hinges(i)
+                end do
+           end if
+        end do
+        
+		coord=0
+		k=0
+        ! Compute center of mass for fiber i
+		do l=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
+			coord= coord + ( (hinges(l)%X_i+hinges(l+1)%X_i)/2d0 )
+			k=k+1
+		end do
+		coord= coord/real(k)
+        
+        do l=1,3
+	       if( (coord(l)) .gt. (box_size(l)/2d0) ) then
+                do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+                   if (hinges(j)%is_stationary==0) hinges(j)%X_i(l)=hinges(j)%X_i(l)-box_size(l)  !2018/09/22  error hinges(i)
+                end do
+           else if (coord(l).lt. (-box_size(l)/2d0)) then 
+		        do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
+			       if (hinges(j)%is_stationary==0) hinges(j)%X_i(l)=hinges(j)%X_i(l)+box_size(l) !2018/09/22  error hinges(i)
+                end do
+           end if
+        end do
+        
+    end do
+    
+end if
+
+end subroutine update_periodic_Initial
 
 end module m_UpDate
 !====================================================================

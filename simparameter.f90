@@ -6,14 +6,24 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParams )  !2018/07/15 ­×¥¿¦r¦ê
+!subroutine simulation_parameter( hinges, r_fiber, gamma_dot, epsilon_dot, flow_case, simParams )  !2018/07/15 ­×¥¿¦r¦ê
+subroutine simulation_parameter( hinges, simParams )  !2018/10/08  ­×¥¿¦r¦ê
 
-type (rod)             :: hinge1, hinge2
-real(8), dimension(3)  :: r, middle_position, vel, omega, d
-real(8)                :: segment_length, r_e, e_, L, r_fiber, gamma_dot, epsilon_dot
-integer(8)             :: Id, j, i, k, l_, aa, flow_case  !error 2018/07/12  integer(8) flow case
-type (rod),   dimension(:)  :: hinges
 type(simulationParameters)  :: simParams
+type (rod),   dimension(:)  :: hinges
+type (rod)                  :: hinge1, hinge2
+
+real(8), dimension(3)       :: r, middle_position, vel, omega, d
+real(8)                     :: segment_length, r_e, e_, L, r_fiber, gamma_dot, epsilon_dot
+integer(8)                  :: Id, j, i, k, l_, aa, flow_case  !error 2018/07/12  integer(8) flow case
+
+flow_case  = simParams%flow_case       !2018/10/08  add
+
+r_fiber    = simParams%r_fiber         !2018/10/08  add
+gamma_dot  = simParams%gamma_dot       !2018/10/08  add
+epsilon_dot= simParams%epsilon_dot     !2018/10/08  add
+
+
 hinge1 = hinges(1)
 hinge2 = hinges(2)
 

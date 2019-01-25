@@ -7,14 +7,20 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine hinges_damage(fibers, hinges, min_curv, r_fiber)
+subroutine hinges_damage( fibers, hinges, simParameters )
+
 implicit none
-type (fiber), dimension(:), allocatable :: fibers, fibers_temp
-type (rod)  , dimension(:), allocatable :: hinges, hinges_temp
-real(8)                    :: max_alpha, r_fiber, fac, alpha,min_curv,curv
-integer                    :: k, i, j, m, n
+type(simulationParameters)                :: simParameters
+type (fiber), dimension(:), allocatable   :: fibers, fibers_temp
+type (rod)  , dimension(:), allocatable   :: hinges, hinges_temp
+real(8)     :: max_alpha, r_fiber, fac, alpha,min_curv,curv
+integer     :: k, i, j, m, n
+
+ min_curv = simParameters%min_curv
+ r_fiber  = simParameters%r_fiber
 
 !fac=0.07*r_fiber   !2018/09/13 origion
+
 fac=0.000001*r_fiber  !2018/09/22 ­×¥¿  fac=0.0001*r_fiber
 
 do i=1, ubound(hinges,1)

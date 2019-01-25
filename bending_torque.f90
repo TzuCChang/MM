@@ -7,17 +7,22 @@ use m_UtilityLib
 implicit none
 contains
 
-subroutine bending_torque_whole(fibers, hinges, E_Young, Inertia_Moment)
+subroutine bending_torque_whole( fibers, hinges, simParameters )  !2018/10/08  ­×¥¿
 
 implicit none
-type (fiber), dimension(:):: fibers
-type (rod), dimension(:)  :: hinges
-real(8), dimension(3)     :: T_b
-real(8)                   :: E_Young, Inertia_Moment
-integer(8)                :: i, j
+type(simulationParameters)     :: simParameters
+type (fiber), dimension(:)     :: fibers
+type (rod), dimension(:)       :: hinges
+real(8), dimension(3)          :: T_b
+real(8)                        :: E_Young, Inertia_Moment
+integer(8)                     :: i, j
 
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(FIBERS, HINGES, E_YOUNG, INERTIA_MOMENT )
 !$OMP DO 
+
+E_Young=        simParameters%E_Young
+Inertia_Moment= simParameters%Inertia_Moment
+
 
 do i=1, ubound(hinges, 1)
 	hinges(i)%T=0d0

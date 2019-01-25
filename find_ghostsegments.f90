@@ -8,25 +8,28 @@ implicit none
 contains
 
 
-subroutine GhostSegments_Location( fibers, hinges, ghost_segments, box_size, box_dimension, gamma_dot, time, simParameters ) !2018/09/12修正
+subroutine GhostSegments_Location( fibers, hinges, ghost_segments, simParameters ) !2018/10/09  修正
 
 implicit none
+type(simulationParameters)                :: simParameters
 type(fiber),   dimension(:), allocatable  :: fibers
 type(rod),     dimension(:), allocatable  :: hinges
 type(segment), dimension(:), allocatable  :: ghost_segments
-type(simulationParameters)                :: simParameters
 
 real(8), dimension(3)       :: box_size, coord
 real(8)                     :: del_X, del_Y, del_Z, dX, gamma_dot, time     !2018/10/02
 
 integer                     :: mm1, mm2, mm3, ix, iy, iz    !2018/10/02
-integer, dimension(3)       :: box_dimension
 integer(8)                  :: i, j, k, m, n
 
 
-     mm1= box_dimension(1)
-     mm2= box_dimension(2)
-     mm3= box_dimension(3)
+box_size  = simParameters%box_size
+gamma_dot = simParameters%gamma_dot
+time      = simParameters%time
+
+     mm1= simParameters%box_dimension(1)
+     mm2= simParameters%box_dimension(2)
+     mm3= simParameters%box_dimension(3)
 
      dX = mod( gamma_dot*box_size(2)/2*time,box_size(1) )  ! 2018/10/02 This is how much the image boxes need to be translated for the lees edward boundaries
      
@@ -80,18 +83,22 @@ end if
 
 end subroutine  GhostSegments_Location
 
-subroutine GhostSegments_NewLocation( hinges, ghost_segments, box_size, gamma_dot, time ) !2018/10/05  修正
-type(rod),     dimension(:)              :: hinges
-type(segment), dimension(:), allocatable :: ghost_segments
+subroutine GhostSegments_NewLocation( hinges, ghost_segments, simParameters ) !2018/10/05  修正
+type(rod),     dimension(:)               :: hinges
+type(segment), dimension(:), allocatable  :: ghost_segments
+type(simulationParameters)                :: simParameters
 
-real(8)                                  :: del_X, del_Y, del_Z, dX, gamma_dot, time
-real(8),dimension(3)                     :: box_size
-
-integer(8)                               :: i, j, k
-integer                                  :: ix, iy, iz
+real(8)                 :: del_X, del_Y, del_Z, dX, gamma_dot, time
+real(8),dimension(3)    :: box_size
+integer(8)              :: i, j, k
+integer                 :: ix, iy, iz
 
 !$OMP PARALLEL DEFAULT(SHARED) 
 !$OMP DO PRIVATE (i, j, k)
+
+box_size  = simParameters%box_size
+gamma_dot = simParameters%gamma_dot
+time      = simParameters%time
 
      dX = mod( gamma_dot*box_size(2)/2*time,box_size(1) )  ! 2018/10/05 增加
      
@@ -128,7 +135,8 @@ end do
 end subroutine GhostSegments_NewLocation 
 
 
-subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, box_size, box_dimension, simParameters )  !2018/10/02 修正
+subroutine GhostSegments_Dimension( fibers, hinges, ghost_segments, simParameters )  !2018/10/02 修正
+
 type(fiber),   dimension(:),  allocatable :: fibers
 type(rod),     dimension(:),  allocatable :: hinges
 type(segment), dimension(:), allocatable  :: ghost_segments
@@ -136,12 +144,11 @@ type(simulationParameters)                :: simParameters
 
 real(8),    dimension(3)    :: box_size, coord
 real(8)                     :: FiberLength, maxLength
-
-
 integer(8)                  :: i, j, nbr_segments, numClones, nbr_GhostSegments
-integer,    dimension(3)    :: box_dimension
 integer                     :: mm1, mm2, mm3
 
+
+box_size=      simParameters%box_size
 
      maxLength=  -huge(0d0)
      do i= 1, ubound (fibers,1)
@@ -158,13 +165,13 @@ integer                     :: mm1, mm2, mm3
      mm2= 1 + int( 0.1d0 + 0.5d0*maxLength/box_size(2) )
      mm3= 1 + int( 0.1d0 + 0.5d0*maxLength/box_size(3) )
  
-if( simParameters%IsPeriodicY .eqv. .false. ) then  ! 2018/10/02  wall 
-    mm2= 0   
-end if
+     if( simParameters%IsPeriodicY .eqv. .false. ) then  ! 2018/10/02  wall 
+         mm2= 0   
+     end if
 
-     box_dimension(1)= mm1
-     box_dimension(2)= mm2
-     box_dimension(3)= mm3
+     simParameters%box_dimension(1)= mm1
+     simParameters%box_dimension(2)= mm2
+     simParameters%box_dimension(3)= mm3
 
      nbr_segments= 0          !2018/09/09  Count the number of segments
      do i=1, ubound(fibers,1)
@@ -179,16 +186,16 @@ end if
      
      allocate( ghost_segments(nbr_GhostSegments) ) 
 
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(1)), real(0.5d0+0.6d0*maxLength/box_size(1)), mm1 
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(2)), real(0.5d0+0.6d0*maxLength/box_size(1)), mm2
-     print *,"@@@ maxLength=", real(maxLength), real(box_size(3)), real(0.5d0+0.6d0*maxLength/box_size(1)), mm3
+     print *,"@@@ maxLength=", real(maxLength), real(box_size(1)), real( 0.1d0 + 0.5d0*maxLength/box_size(1) ), mm1  !2018/10/08
+     print *,"@@@ maxLength=", real(maxLength), real(box_size(2)), real( 0.1d0 + 0.5d0*maxLength/box_size(2) ), mm2  !2018/10/08
+     print *,"@@@ maxLength=", real(maxLength), real(box_size(3)), real( 0.1d0 + 0.5d0*maxLength/box_size(3) ), mm3  !2018/10/08
      print *,"@@@"
      print *,"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
      print *,"@@@"
      
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(1)), real(0.5 + maxLength/box_size(1)), mm1 
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(2)), real(0.5 + maxLength/box_size(2)), mm2
-     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(3)), real(0.5 + maxLength/box_size(3)), mm3
+     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(1)), real( 0.1d0 + 0.5d0*maxLength/box_size(1) ), mm1  !2018/10/08
+     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(2)), real( 0.1d0 + 0.5d0*maxLength/box_size(2) ), mm2  !2018/10/08
+     write(301,*), "@@@ maxLength=", real(maxLength), real(box_size(3)), real( 0.1d0 + 0.5d0*maxLength/box_size(3) ), mm3  !2018/10/08
      write(301,*), "@@@"
      write(301,*), "@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
      write(301,*), "@@@"     

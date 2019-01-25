@@ -76,9 +76,9 @@ integer                   :: ind
 end type rod
 
 type vec_arr
-real(8), dimension(3)::pb
-real(8)              ::Gab_norm
-logical              ::coll_course
+real(8), dimension(3):: pb
+real(8)              :: Gab_norm
+logical              :: coll_course
 real(8), dimension(3):: Gab
 real(8), dimension(3):: r
 real(8)              :: Sba
@@ -90,10 +90,27 @@ real(8), dimension(3)::r
 end type simple_vec_arr
 
 type simulationParameters
-real(8)                  ::X_A, Y_A, X_C, Y_C, Y_H
-real(8), dimension(3,3)  ::E_oo
-real(8), dimension(3,3,3)::eps
-logical                  :: IsPeriodicY
+
+logical                  :: IsPeriodicY, periodic_boundary
+logical                  :: recover_simulation, allow_breakage
+logical                  :: is_fric_wall, printVelocities
+
+
+integer(8)               :: flow_case, nbr_Dynamic, frame, h
+integer(8)               :: nbr_neighbors, nbr_intgr, writ_period, break_period
+integer, dimension(3)    :: Nbr_bins, box_dimension                                            !2018/10/09
+
+real(8), dimension(3,3,3):: eps
+real(8), dimension(3,3)  :: E_oo
+real(8), dimension(3)    :: box_size
+
+real(8)    :: X_A, Y_A, X_C, Y_C, Y_H
+
+real(8)    :: FiberLength, FiberVolume, BoxVolume, VolumeFraction
+real(8)    :: E_Young, min_curv, r_fiber, viscosity, ex_vol_const
+real(8)    :: gamma_dot, epsilon_dot, fric_coeff, distanceFactor
+real(8)    :: dt, time, Inertia_Moment, Controltime
+
 
 end type simulationParameters
 
@@ -107,6 +124,13 @@ type bound_box
 real(8), dimension(3):: X
 real(8), dimension(3):: W
 end type bound_box
+
+type DynamicP                              !2018/10/10  new add
+real(8)     :: Duration
+real(8)     :: Shearrate
+real(8)     :: Viscosity
+end type DynamicP
+
 
 end module m_DataStructures
 

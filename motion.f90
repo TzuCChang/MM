@@ -6,11 +6,14 @@ module m_Motion
     implicit none
     contains
 
-subroutine motion_fiber(fibers, hinges, r_bead)
-    type(fiber) , dimension(:):: fibers
-    type(rod), dimension(:)   :: hinges
-    integer(8)                :: i
-    real(8)                   :: r_bead, viscosity,timex, timeA
+subroutine motion_fiber( fibers, hinges, simParameters )
+type(simulationParameters) :: simParameters  
+type(fiber) , dimension(:) :: fibers
+type(rod), dimension(:)    :: hinges
+integer(8)                 :: i
+real(8)                    :: r_bead, viscosity, timex, timeA
+
+    r_bead= simParameters%r_fiber   !2018/10/10 add
 
 !   timeA = OMP_get_wtime()
 !   call omp_set_num_threads(6)
@@ -57,18 +60,20 @@ subroutine copyToBanded(AB, KL, KU, nbRows, i1, i2, j1, j2, A)
 end subroutine copyToBanded
 
 !*****************************************************************************************
-subroutine motion_matrix(fiber_hinges, r_bead)
-    implicit none
-    type (rod), dimension(:)             :: fiber_hinges
-    real(8), dimension(:,:), allocatable :: Amat, bvec, xvec, AB
-    real(8), dimension(9,15)             :: mat
-    real(8), dimension(9,1)              :: vec
-    real(8)                              :: r_bead, drag_coeff_vel, drag_coeff_omega, finish2, start2, timex
-    real(8), parameter                   :: pi=3.141592
-    integer(8)                           :: i, k, j, l, kl, ku, minSegs 
-    integer                              :: n, ii, jj
+subroutine motion_matrix( fiber_hinges, r_bead )
+implicit none
+type (rod), dimension(:)             :: fiber_hinges
 
-    drag_coeff_vel = 6d0*pi*r_bead
+real(8), dimension(:,:), allocatable :: Amat, bvec, xvec, AB
+real(8), dimension(9,15)             :: mat
+real(8), dimension(9,1)              :: vec
+real(8)                              :: r_bead, drag_coeff_vel, drag_coeff_omega, finish2, start2, timex
+real(8), parameter                   :: pi=3.141592
+integer(8)                           :: i, k, j, l, kl, ku, minSegs 
+integer                              :: n, ii, jj
+
+
+    drag_coeff_vel  = 6d0*pi*r_bead
     drag_coeff_omega= 8d0*pi*r_bead**3d0
     minSegs =4
 

@@ -5,48 +5,46 @@ use m_DataStructures
 implicit none
 contains
 
-subroutine output_data( t, fibers, hinges, frame, printVelocities )
-type (rod), allocatable, dimension(:)  :: hinges
-type (fiber), allocatable, dimension(:):: fibers
-integer(8)                             :: i, j, k, mm, nn, frame, nbr_Segments_Total, nbr_Fibers
-logical                                :: printVelocities
+subroutine output_data( fibers, hinges, simParameters )  !2018/10/10 修正
 
-type(rod)                   :: hinge1, hinge2, hingeHead, hingeEnd
-real(8)                     :: FiberLength, FiberLength_Total, t
-real(8),   dimension(3)     :: r
-
+type(simulationParameters)               :: simParameters
+type (fiber), dimension(:), allocatable  :: fibers
+type(rod),    dimension(:), allocatable  :: hinges
+integer(8)                               :: i, j, k
 
   open(4,file='OUTPUT/nbr_frames.txt')
-  	!write (4,*), ubound(hinges,1)
-	write (4,*), frame
+  	  !write (4,*), ubound(hinges,1)
+	   write (4,*), simParameters%frame
   close(4)
 
-  !write (3,*), frame
   k=1
-  write (3,*), ubound(fibers,1)
+  
+ !write(3,*), simParameters%frame  
+  write(3,*), ubound(fibers,1)
+  
   do i=1, ubound(fibers,1)
-  	write (3,*), fibers(i)%nbr_hinges
-  	do j=k, k+fibers(i)%nbr_hinges-1
-  		write (3,*), hinges(k)%X_i(1), hinges(k)%X_i(2), hinges(k)%X_i(3)
-        if (printVelocities) then
-            write (5,*), hinges(k)%v_i(1), hinges(k)%v_i(2), hinges(k)%v_i(3)
+  	 write(3,*), fibers(i)%nbr_hinges
+  	 do j=k, k+fibers(i)%nbr_hinges-1
+  		write(3,*), hinges(k)%X_i(1), hinges(k)%X_i(2), hinges(k)%X_i(3)
+        if( simParameters%printVelocities ) then 
+            write(5,*), hinges(k)%v_i(1), hinges(k)%v_i(2), hinges(k)%v_i(3)
         end if
-        
 		k=k+1
-  	end do
+  	 end do
   end do
             
 end subroutine output_data
 
 
 subroutine output_Length( t, fibers, hinges )  !2018/09/22  修正
+
 type(fiber), dimension(:),  allocatable :: fibers
 type(rod),   dimension(:),  allocatable :: hinges
 
-real(8)                     :: FiberLength_Total, FiberLength, SegmentLength, t
 real(8), dimension(3)       :: coord
-integer(8)                  :: i, j, k, mSegments
+real(8)                     :: FiberLength_Total, FiberLength, SegmentLength, t
 real                        :: length, lengthAvg
+integer(8)                  :: i, j, k, mSegments
 integer                     :: mm, nn, tt
 
 
@@ -158,7 +156,7 @@ trace_A= AA(1,1) + AA(2,2) + AA(3,3)
 
 AA= AA/trace_A
 
-print *, "### trace ",trace_A, mm
+!print *, "### trace ",trace_A, mm
 print *, "###", tt, ubound (fibers,1)
 print *, AA
 
@@ -234,19 +232,23 @@ end do
 end subroutine output_FiberLengthModification
 
 
-subroutine output_Initial_Positions_New( fibers, hinges, box_size )   !2018/09/22
+subroutine output_Initial_Positions_New( fibers, hinges, simParameters )   !2018/09/22
         
 implicit none
-type(fiber),   dimension(:), allocatable :: fibers
-type(rod),     dimension(:), allocatable :: hinges
 
-real(8), dimension(3)       :: box_size, coord
-real(8)                     :: del_X, del_Y, del_Z, x, y, z
+type(simulationParameters)             :: simParameters
+type(fiber), dimension(:), allocatable :: fibers
+type(rod),   dimension(:), allocatable :: hinges
 
-integer                     :: mm1, mm2, mm3, mm1_A, mm1_B, mm2_A, mm2_B, mm3_A, mm3_B, ix, iy, iz
-integer                     :: i, j, N_Fiber, N_hinge
+real(8), dimension(3) :: box_size, coord
+real(8)               :: del_X, del_Y, del_Z, x, y, z
 
-     open(305,file='OUTPUT/Initial_Positions_New.txt')  !2018/09/22
+integer               :: mm1, mm2, mm3, mm1_A, mm1_B, mm2_A, mm2_B, mm3_A, mm3_B, ix, iy, iz
+integer               :: i, j, N_Fiber, N_hinge
+
+box_size= simParameters%box_size
+
+open(305,file='OUTPUT/Initial_Positions_New.txt')  !2018/09/22
         
      mm1_A= -1
      mm1_B=  1
@@ -324,10 +326,40 @@ mm3_B=  0
 !pause
      end do    
 
-     close( 305 )
+close( 305 )
 !pause     
 
 end subroutine output_Initial_Positions_New
+
+subroutine output_DynamicP_1848( flowcase_1848, simParameters )               !2018/10/11 
+
+implicit none
+type(simulationParameters)                 :: simParameters
+type(DynamicP), dimension(:), allocatable  :: flowcase_1848                   !2018/10/11 add
+integer(8)                                 :: h                               !2018/10/11 
+       
+        h= simParameters%h                                                    !2018/10/11 增加
+        
+        print *,     "###"               
+        print *,     "### Dynamic Parameters CHANGE"                          !2018/10/11 增加
+        print *,     "### StepNo., Time(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
+        print *,     "###",&
+                      int(simParameters%h),&
+                      int(0.5+1.0e6*flowcase_1848(h)%Duration),&
+                      real(flowcase_1848(h)%Shearrate),&
+                      real(flowcase_1848(h)%Viscosity)                        !2018/10/11 增加
+        print *,     "###"                                                    !2018/10/11 增加
+        write(301,*),"###"
+        write(301,*),"### Dynamic Parameters CHANGE"                          !2018/10/11 增加
+        write(301,*),"### StepNo., Time(Micro.Sec.), Gamma_dot, Viscosity"    !2018/10/11 增加
+        write(301,*),"###",&
+                      int(simParameters%h),&
+                      int(0.5+1.0e6*flowcase_1848(h)%Duration),&
+                      real(flowcase_1848(h)%Shearrate),&
+                      real(flowcase_1848(h)%Viscosity)                        !2018/10/11 增加
+        write(301,*),"###"                                                   !2018/10/11 增加
+
+end subroutine output_DynamicP_1848  !2018/10/11 change name
 
 
 

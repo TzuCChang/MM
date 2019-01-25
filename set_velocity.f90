@@ -3,9 +3,45 @@ module m_SetVelocity
     
 use m_DataStructures
 use m_UtilityLib
-
+use m_OutputData                                                              !2018/10/11  change name
 implicit none
 contains
+
+
+subroutine set_velocity_1848( flowcase_1848, simParameters )   !2018/10/10 add by HAKAN for dynamic paramaters
+
+implicit none
+type(simulationParameters)                 :: simParameters
+type(DynamicP), dimension(:), allocatable  :: flowcase_1848                   !2018/10/11  add
+
+integer(8)                                :: h                                !2018/10/11 
+
+
+    h= simParameters%h
+
+    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
+
+    if( simParameters%time > simParameters%Controltime ) then                 !2018/10/11 增加
+        
+        simParameters%h = simParameters%h + 1                                 !2018/10/11 增加
+        
+        if( simParameters%h .GT. simParameters%nbr_Dynamic ) then             !2018/10/11 增加
+            simParameters%h = simParameters%nbr_Dynamic                       !2018/10/11 增加
+        end if                                                                !2018/10/11 增加
+        
+        h= simParameters%h                                                    !2018/10/11 增加
+        
+        call output_DynamicP_1848( flowcase_1848, simParameters )             !2018/10/11 增加
+
+    end if
+
+    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
+    simParameters%gamma_dot   = flowcase_1848(h)%Shearrate                    !2018/10/11 增加
+    simParameters%viscosity   = flowcase_1848(h)%Viscosity                    !2018/10/11  add
+    
+
+end subroutine set_velocity_1848  !2018/10/10 change name
+
 
 subroutine set_velocity( X,&    !2018/07/21 change name
                          vel,&

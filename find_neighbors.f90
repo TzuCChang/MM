@@ -14,36 +14,35 @@ subroutine find_neighbors_new( fibers,&
                                nbr_neighbors,&
                                neighbor_list,&
                                distance_neighbors,&
-                               r_fiber,&
                                cells,&
-                               Nbr_bins,&
-                               distance_factor )
+                               simParameters )
 
-type(cell),  dimension(:), allocatable :: cells
-type(fiber), dimension(:)              :: fibers
-type(rod),   dimension(:)              :: hinges
-type(rod)                              :: ghost_hingeA, ghost_hingeB
-type(segment), dimension(:)            :: ghost_segments
-logical                                :: flag
+type(simulationParameters)              :: simParameters
+type(cell),  dimension(:), allocatable  :: cells
+type(fiber), dimension(:)               :: fibers
+type(rod),   dimension(:)               :: hinges
+type(rod)                               :: ghost_hingeA, ghost_hingeB
+type(segment), dimension(:)             :: ghost_segments
+logical                                 :: flag
 
 integer(8), dimension(:,:), allocatable:: neighbor_list
-
 integer(8), dimension(:),   allocatable:: IndexSegms
-
 integer,    dimension(3)               :: i_cell, nbr_bins, indx
 integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj, kk, indd, iSegm, mSegm  !error ­×¥¿2018/07/14
 
 real(8), dimension(:,:), allocatable   :: distance_neighbors
-
 real(8), dimension(:),   allocatable   :: distanceSegms
-
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
 real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
-real(8)                                :: distance_factor, ex_vol_const, fric_coeff
+real(8)                                :: distanceFactor, ex_vol_const, fric_coeff
+
+nbr_bins       = simParameters%nbr_bins              !2018/10/10
+r_fiber        = simParameters%r_fiber               !2018/10/10
+distanceFactor = simParameters%distanceFactor        !2018/10/10
 
 epsilon= 3*tiny(1d0)
 
-threshold= distance_factor*r_fiber
+threshold= distanceFactor*r_fiber
 
 ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
                  !is used here to find the distances without being concerned with the forces...
@@ -141,16 +140,14 @@ end subroutine find_neighbors_new
                  
                                                   
 subroutine find_neighbors_new_original( fibers,&
-                               hinges,&
-                               ghost_segments,&
-                               nbr_neighbors,&
-                               neighbor_list,&
-                               distance_neighbors,&
-                               r_fiber,&
-                               cells,&
-                               Nbr_bins,&
-                               distance_factor )
+                                        hinges,&
+                                        ghost_segments,&
+                                        neighbor_list,&
+                                        distance_neighbors,&
+                                        cells,&
+                                        simParameters )
 
+type(simulationParameters)             :: simParameters
 type(cell),  dimension(:), allocatable :: cells
 type(fiber), dimension(:)              :: fibers
 type(rod),   dimension(:)              :: hinges
@@ -165,11 +162,16 @@ integer(8)                             :: i, j, k, m, o, nbr_neighbors, ii , jj,
 real(8), dimension(:,:), allocatable   :: distance_neighbors
 real(8), dimension(3)                  :: rad, d, Gab, A1, A2, B1, B2
 real(8)                                :: s, t, Gab_min, r_fiber, threshold, epsilon
-real(8)                                :: distance_factor, ex_vol_const, fric_coeff
+real(8)                                :: distanceFactor, ex_vol_const, fric_coeff
 
+nbr_bins       = simParameters%nbr_bins
+r_fiber        = simParameters%r_fiber                               
+distanceFactor = simParameters%distanceFactor
+nbr_neighbors  = simParameters%nbr_neighbors
+                               
 epsilon= 3*tiny(1d0)
 
-threshold= distance_factor*r_fiber
+threshold= distanceFactor*r_fiber
 
 ex_vol_const= 1  !Not really necessary, the ex_vol_forces_moments_segs
                  !is used here to find the distances without being concerned with the forces...

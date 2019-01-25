@@ -9,24 +9,25 @@ use m_SetVelocity !2018/07/22 add
 implicit none
 contains
 
-subroutine fiber_calc_tensor( fibers,&  !2018/07/21 change name
-                              hinges,&
-                              r_fiber,&
-                              viscosity,&
-                              gamma_dot,&
-                              epsilon_dot,&
-                              flow_case,&
-                              simParameters )
+subroutine fiber_calc_tensor( fibers, hinges, simParameters )  !2018/10/08  change
 
+type(simulationParameters)  :: simParameters
 type (rod),   dimension(:)  :: hinges
 type (fiber), dimension(:)  :: fibers
+
 integer(8)                  :: i, j, k, first, last, flow_case
 real(8)                     :: r_fiber, viscosity, gamma_dot, epsilon_dot
-type(simulationParameters)  :: simParameters
 
 !!call omp_set_num_threads(6)
 !$OMP PARALLEL default(private) SHARED(r_fiber, viscosity, gamma_dot, epsilon_dot, flow_case, simParameters, hinges, fibers )
 !$OMP DO !SCHEDULE(DYNAMIC) ! all of tehm should be shared by default anyway
+
+flow_case   = simParameters%flow_case       !2018/10/08  change
+r_fiber     = simParameters%r_fiber         !2018/10/08  change
+viscosity   = simParameters%viscosity       !2018/10/08  change
+gamma_dot   = simParameters%gamma_dot       !2018/10/08  change
+epsilon_dot = simParameters%epsilon_dot     !2018/10/08  change
+
 
 do i=1, ubound(fibers,1)
     first=fibers(i)%first_hinge
@@ -51,22 +52,24 @@ end do
 end subroutine fiber_calc_tensor   !2018/07/21 change name
                           
 !====================================================================                          
-subroutine fiber_calc( fibers,&   !2018/07/21 change name
-                       hinges,&
-                       r_fiber,&
-                       viscosity,&
-                       gamma_dot,&
-                       epsilon_dot,&
-                       flow_case )
+subroutine fiber_calc( fibers, hinges, simParameters ) !2018/10/08   change name
 
+type(simulationParameters)  :: simParameters
 type (rod),   dimension(:)  :: hinges
 type (fiber), dimension(:)  :: fibers
+
 integer(8)                  :: i, j, k, first, last, flow_case
 real(8)                     :: r_fiber, viscosity, gamma_dot, epsilon_dot
 
 !!call omp_set_num_threads(6)
 !$OMP PARALLEL
 !$OMP DO PRIVATE(first, last, i, j)
+
+flow_case   = simParameters%flow_case       !2018/10/08  change
+r_fiber     = simParameters%r_fiber         !2018/10/08  change
+viscosity   = simParameters%viscosity       !2018/10/08  change
+gamma_dot   = simParameters%gamma_dot       !2018/10/08  change
+epsilon_dot = simParameters%epsilon_dot     !2018/10/08  change
 
 do i=1, ubound(fibers,1)
     first=fibers(i)%first_hinge

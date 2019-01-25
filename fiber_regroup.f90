@@ -8,23 +8,19 @@ implicit none
 contains
 
 !*===================================================================
- subroutine fiber_regroup( fibers,&                   !2018/09/08 修正
+ subroutine fiber_regroup( fibers,&                   !2018/10/09  修正
                            hinges,&
                            ghost_segments,&
-                           r_fiber,&
-                           box_size,&
-                           cells,&
-                           nbr_neighbors,&
                            neighbor_list,&
-                           Nbr_bins,&              !2018/07/21  add
+                           cells,&
                            simParameters )
 
 implicit none
+type(simulationParameters)               :: simParameters
 type(fiber),   dimension(:), allocatable :: fibers
 type(rod),     dimension(:), allocatable :: hinges
 type(segment), dimension(:), allocatable :: ghost_segments
 type(cell),    dimension(:), allocatable :: cells
-type(simulationParameters)               :: simParameters
 logical                                  :: allow_breakage
 
 integer(8), dimension(:,:), allocatable  :: neighbor_list
@@ -37,6 +33,9 @@ real(8), dimension(3)                    :: r, box_size,min_coor, max_coor , cen
 real(8)                                  :: distanceFactor, finish2, finish3, start2,  start3
 real(8)                                  :: r_fiber, max_length, bin_length
 
+r_fiber  = simParameters%r_fiber            !2018/10/09  修正
+box_size = simParameters%box_size           !2018/10/09  修正
+nbr_neighbors= simParameters%nbr_neighbors  !2018/10/10  修正
 
      nbr_GhostSegments= ubound(ghost_segments,1)
 
@@ -152,6 +151,8 @@ real(8)                                  :: r_fiber, max_length, bin_length
             cells( ghost_segment_index(j-1) )%ghost_limits(2)= j-1
         end if
      end do
+     
+     simParameters%Nbr_bins= Nbr_bins            !2018/10/10  修正
 
 !    print *,Nbr_bins(1), Nbr_bins(2), Nbr_bins(3), ubound(cells,1)
 !    do i=1, Nbr_bins(1)
@@ -171,15 +172,19 @@ real(8)                                  :: r_fiber, max_length, bin_length
 end subroutine fiber_regroup 
 
                            
-subroutine fiber_regroup_ShiftCenterToOrigion( fibers, hinges, box_size ) !2018/08/05 add
+subroutine fiber_regroup_ShiftCenterToOrigion( fibers, hinges, simParameters ) !2018/08/05 add
 
-type(fiber), allocatable, dimension(:) :: fibers
-type(rod)  , allocatable, dimension(:) :: hinges
+type(fiber), allocatable, dimension(:)   :: fibers
+type(rod)  , allocatable, dimension(:)   :: hinges
+type(simulationParameters)               :: simParameters
 
-real(8), dimension(3)                  :: coord, min_coor, max_coor, box_size
-integer(8)                             :: i, j, k, m  
+real(8), dimension(3)     :: box_size, coord, min_coor, max_coor
+integer(8)                :: i, j, k, m  
+
+box_size= simParameters%box_size
 
 !2018/08/05  Compute center of mass for all fibers coord
+
 print *,"@@@"
 print *,"based on all hinges"
 m= 0

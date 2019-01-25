@@ -8,27 +8,27 @@ use omp_lib
 implicit none
 contains
 
-subroutine excl_VolForceMomentsTotal( fibers,&        !2018/09/08  ­×¥¿ 
-                                      hinges,&
-                                      ghost_segments,&
-                                      neighbor_list,&
-                                      nbr_neighbors,&    
-                                      r_fiber,&
-                                      fric_coeff,&
-                                      ex_vol_const) 
-
-
-logical                                 :: flag
-type(fiber), dimension(:)               :: fibers
-type(rod),   dimension(:)               :: hinges
-type(rod)                               :: ghost_hingeA, ghost_hingeB, ghost_hingeC, ghost_hingeD
+subroutine excl_VolForceMomentsTotal( fibers, hinges, ghost_segments, neighbor_list, simParameters )  !2018/10/09  ­×¥¿ 
+                                      
 type(segment), dimension(:), allocatable   :: ghost_segments
+
+type(simulationParameters)     :: simParameters
+type(fiber), dimension(:)      :: fibers
+type(rod),   dimension(:)      :: hinges
+type(rod)                      :: ghost_hingeA, ghost_hingeB, ghost_hingeC, ghost_hingeD
+logical                        :: flag
 
 integer(8)                              :: i, j, k, m, j1, j2, nbr_neighbors   !2018/08/04  add
 integer(8), dimension(:,:), allocatable :: neighbor_list
 real(8), dimension(3)                   :: Gab
 real(8)                                 :: viscosity, ex_vol_const
 real(8)                                 :: r_fiber, s, t, Gab_min, fric_coeff, threshold
+
+
+r_fiber      = simParameters%r_fiber          !2018/10/09 add
+fric_coeff   = simParameters%fric_coeff       !2018/10/09 add
+ex_vol_const = simParameters%ex_vol_const     !2018/10/09 add
+nbr_neighbors= simParameters%nbr_neighbors
 
 threshold= 2*r_fiber
 
@@ -90,25 +90,30 @@ end do
 end subroutine excl_VolForceMomentsTotal
 
 !======================================================================                                        
-subroutine excl_VolForceMomentsWalls2( fibers,&    !2018/08/01 change name
-                                       hinges,&
-                                       box_size,&
-                                       is_fric_wall,&
-                                       gamma_dot,&
-                                       r_fiber,&
-                                       fric_coeff,&
-                                       ex_vol_const)
+subroutine excl_VolForceMomentsWalls2( fibers, hinges, simParameters )    !2018/10/09 change name
+                                       
+type(simulationParameters)     :: simParameters
+type(fiber), dimension(:)      :: fibers
+type(rod), dimension(:)        :: hinges
+logical                        :: is_fric_wall
+
 integer                  :: i, j, k
-type(fiber), dimension(:):: fibers
-type(rod), dimension(:)  :: hinges
 real(8)                  :: ex_vol_const, dist, r_fiber, vec_to_wall, threshold
 real(8), dimension(3)    :: box_size, Exc_Vol_Force_Partial, r, v_rel, X_fiber
 real(8), dimension(2)    :: wall_position
 real(8)                  :: FAC, gamma_dot
-logical                  :: is_fric_wall
 real(8)                  :: fric_coeff
 
+
+box_size     = simParameters%box_size         !2018/10/09 add
+gamma_dot    = simParameters%gamma_dot        !2018/10/09 add
+r_fiber      = simParameters%r_fiber          !2018/10/09 add
+is_fric_wall = simParameters%is_fric_wall     !2018/10/09 add
+fric_coeff   = simParameters%fric_coeff       !2018/10/09 add
+ex_vol_const = simParameters%ex_vol_const     !2018/10/09 add
+                                       
 !2018/08/05  Compute center of mass for all fibers X_fiber
+
 k= 0
 X_fiber= 0
 do i= 1, ubound (fibers,1)  
@@ -242,7 +247,8 @@ subroutine excl_VolForceSegments( hingesa1,&  !2018/08/03 ­×¥¿
                                   Gab_min,&
 				                  fric_coeff )
 
-type(rod)               :: hingesa1, hingesa2, hingesb1, hingesb2
+type(simulationParameters)   :: simParameters
+type(rod)                    :: hingesa1, hingesa2, hingesb1, hingesb2
 
 integer(8)              :: i,j, k,l, ind1, ind2
 
