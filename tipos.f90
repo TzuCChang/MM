@@ -43,26 +43,24 @@ integer(8)                :: in_fiber
 integer(8)                :: nbr_beads
 real(8)   , dimension(3)  :: X_i
 real(8)   , dimension(3)  :: T
-real(8)   , dimension(3)  :: F_excl_vol
-real(8)   , dimension(3)  :: T_excl_vol
+real(8)   , dimension(3)  :: F_excl, rk_vel
+real(8)   , dimension(3)  :: T_excl
 real(8)   , dimension(3)  :: v_i
-real(8)   , dimension(3)  :: v_i_old   !2019/09/05
+real(8)   , dimension(3)  :: v_i_old             !2019/09/05
 real(8)   , dimension(3)  :: omega_i
-real(8)   , dimension(3)  :: omega_fluid_sum
-real(8)   , dimension(3)  :: u_fluid_sum
-real(8)   , dimension(3)  :: u_oo
-real(8)   , dimension(3)  :: omega_oo
+real(8)   , dimension(3)  :: omega_sum           !2018/12/07 add
+real(8)   , dimension(3)  :: uoo_sum
+real(8)   , dimension(3)  :: omega_oo            !2018/12/07 add
 real(8)   , dimension(3)  :: r
 real(8)   , dimension(3)  :: r_unit
-real(8)   , dimension(3)  :: r_sum
+real(8)   , dimension(3)  :: r_sum, rk_sum       !2018/12/07 add
 real(8)   , dimension(3,3):: r_prod_sum
-real(8)   , dimension(3,3):: r_times_u_sum
 real(8)   , dimension(3,3):: A
 real(8)   , dimension(3,3):: C
-real(8)   , dimension(3)  :: H
+real(8)   , dimension(3)  :: H, Auf_oo           !2018/12/07 add
 real(8),    dimension(3)  :: omega
-real(8),    dimension(3)  :: omega_old   !2019/09/05
-real(8)                   :: length
+real(8),    dimension(3)  :: omega_old                      !2018/09/05
+real(8)                   :: length, c1_nbeads, c2_nbeads   !2018/12/07
 real(8)                   :: length2
 real(8)                   :: alpha
 real(8)                   :: curv
@@ -93,7 +91,7 @@ logical                  :: is_fric_wall, printVelocities
 
 integer(8), dimension(3) :: Nbr_bins, box_dimension
 integer(8)               :: flow_case, nbr_Dynamic, frame, h, nStep_max, nStep_Total, k, n     !2018/11/25
-integer(8)               :: nbr_neighbors, nbr_intgr, writ_period, break_period, nStep         !2018/10/27
+integer(8)               :: nbr_neighbors, nbr_intgr, writ_period, break_period, nStep, TensorOrBeads         !2018/12/02 add
 
 real(8), dimension(3,3,3):: eps
 real(8), dimension(3,3)  :: E_oo
@@ -104,7 +102,8 @@ real(8)    :: FiberLength, FiberVolume, BoxVolume, VolumeFraction
 real(8)    :: E_Young, min_curv, r_fiber, viscosity, ex_vol_const
 real(8)    :: gamma_dot, epsilon_dot, fric_coeff, distanceFactor
 real(8)    :: dt, time, Inertia_Moment, Controltime, displ_max                !2018/10/27
-real(8)    :: start, finish                                                   !2018/11/25
+real(8)    :: start, finish, current_time                                     !2018/12/09
+real(8)    :: coo_velocity, coo_omega                                         !2018/12/09
 
 end type simulationParameters
 

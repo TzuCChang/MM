@@ -14,15 +14,15 @@ logical                                :: periodic_boundary
 logical                                :: recover_simulation,allow_breakage
 logical                                :: is_fric_wall,printVelocities
 
-integer(8)                             :: frame, nbr_Dynamic, nStep_Total        !2018/11/18
+integer(8)                             :: frame, nbr_Dynamic, nStep_Total, TensorOrBeads                !2018/12/01
 integer(8)                             :: nbr_neighbors, flow_case, nbr_intgr, writ_period, break_period
 integer(8)                             :: i, j, k, m, n, nbr_fibers, nbr_hinges, nbr_hinges_total, nbr_Segments_total
 real(8), dimension(3)                  :: box_size
 real(8), dimension(3)                  :: coord, min_coor, max_coor
 real(8)                                :: Duration, Shearrate, Viscosity
 real(8)                                :: FiberLength, FiberVolume, BoxVolume, VolumeFraction
-real(8)                                :: E_Young, min_curv, r_fiber, ex_vol_const
-real(8)                                :: gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor
+real(8)                                :: E_Young, min_curv, r_fiber, ex_vol_const, coo_velocity, coo_omega   !2018/12/16
+real(8)                                :: gamma_dot, epsilon_dot, dt, void, fric_coeff, distanceFactor, ratio_displ_max !2018/12/09
 real(8), parameter                     :: pi= 3.141592653589793d0
 
 namelist /input/ recover_simulation,&
@@ -45,12 +45,21 @@ namelist /input/ recover_simulation,&
                  writ_period,&
                  break_period,&
                  printVelocities,&
-                 distanceFactor
+                 distanceFactor,&
+                 TensorOrBeads,&
+                 ratio_displ_max,&   !2018/12/09
+                 coo_velocity,&      !2018/12/16
+                 coo_omega           !2018/12/16
 
 
 	open(1,file='INPUT/Fibers.in', status='old')
     read(1,nml = input)
 	close(1)
+
+    simParameters%AA= 0
+
+    simParameters%TensorOrBeads= TensorOrBeads        !2018/12/02   1: Tensor;  2: Beads
+    simParameters%displ_max= ratio_displ_max*r_fiber  !2018/12/09   displ_max=  ratio_displ_max * r_fiber
 
     simParameters%pi= pi                              !2018/11/25 add
     
@@ -60,9 +69,6 @@ namelist /input/ recover_simulation,&
 
     simParameters%Inertia_Moment=  (pi/4.d0)*r_fiber**4d0     !2018/10/08 add
     
-
-
-
     simParameters%recover_simulation = recover_simulation     !2018/10/08 add
     simParameters%fric_coeff         = fric_coeff             !2018/10/08 add
     simParameters%is_fric_wall       = is_fric_wall           !2018/10/08 add
@@ -86,7 +92,25 @@ namelist /input/ recover_simulation,&
     simParameters%distanceFactor  = distanceFactor   !2018/10/08 add
 
     simParameters%nbr_neighbors   = nbr_neighbors    !2018/10/08 add
+    simParameters%coo_velocity    = coo_velocity     !2018/12/16 add
+    simParameters%coo_omega       = coo_omega        !2018/12/16 add
+
+if( simParameters%TensorOrBeads .eq. 1 ) then                      !2018/12/02
+    print *,      "Hydrodynamic representation being used is   TENSOR"
+    write(301,*), "Hydrodynamic representation being used is   TENSOR"
+    print *,"@@@"    
+else
+    print *,      "Hydrodynamic representation being used is   BEAD"
+    write(301,*), "Hydrodynamic representation being used is   BEAD"
+    write(301,*), "@@@"
+endif
     
+    print *,      "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/12/02
+    write(301,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/12/02
+    write(300,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/12/02
+    write(306,*), "Time(micro sec.), a11"                                               !2018/12/02
+    write(307,*), "Time(micro sec.), Ln(mm)"                                            !2018/12/02
+  
     print *,"------------------------------------------"
 	print *,"INPUT SUMMARY"
 	print *,"recover_simulation", recover_simulation
@@ -112,6 +136,8 @@ namelist /input/ recover_simulation,&
     print *,"allow breakage  ",allow_breakage
     print *,"printVelocities ", printVelocities
     print *,"distanceFactor  ", distanceFactor
+    print *,"TensorOrBeads   ", TensorOrBeads
+    print *,"ratio_displ_max ", ratio_displ_max
 	print *,"------------------------------------------"
     
     write(301,*),"------------------------------------------"
@@ -139,6 +165,8 @@ namelist /input/ recover_simulation,&
     write(301,*),"allow breakage  ", allow_breakage
     write(301,*),"printVelocities ", printVelocities
     write(301,*),"distanceFactor  ", distanceFactor
+    write(301,*),"TensorOrBeads   ", TensorOrBeads
+    write(301,*),"ratio_displ_max ", ratio_displ_max
 	write(301,*),"------------------------------------------"
  
     open(3, file='OUTPUT/positions.out')

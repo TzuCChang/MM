@@ -86,7 +86,18 @@ real(8), dimension (3):: cross, vec1, vec2
  cross(1)=  vec1(2)*vec2(3)-vec1(3)*vec2(2)
  cross(2)=-(vec1(1)*vec2(3)-vec1(3)*vec2(1))
  cross(3)=  vec1(1)*vec2(2)-vec1(2)*vec2(1)
+ 
 end function cross
+
+function AdotU( A, u )  !2018/12/07
+real(8), dimension(3,3) :: A
+real(8), dimension(3)   :: u, AdotU
+
+ AdotU(1)=  A(1,1)*u(1) + A(1,2)*u(2)+ A(1,3)*u(3)
+ AdotU(2)=  A(2,1)*u(1) + A(2,2)*u(2)+ A(2,3)*u(3)
+ AdotU(3)=  A(3,1)*u(1) + A(3,2)*u(2)+ A(3,3)*u(3)
+
+end function AdotU
 
 
 function clamp( a, b, c)

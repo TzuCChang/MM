@@ -186,7 +186,8 @@ box_size= simParameters%box_size
 !2018/08/05  Compute center of mass for all fibers coord
 
 print *,"@@@"
-print *,"based on all hinges"
+print *,"based on all hinges(mm)"  !2018/12/09
+
 m= 0
 coord= 0
 do i= 1, ubound (fibers,1)  
@@ -196,8 +197,12 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
 end do
 end do        
 coord= coord/real(m)  !2018/08/05  coord= center of mass 
-print *,"cen ", coord
 
+     write(*,100), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000  !2018/12/09
+100  format( A5, 3F15.6 )
+     write(301,200), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000  !2018/12/09
+200  format( A5, 3F15.6 )
+     
 !2018/08/05 shift center of mass to (0,0,0) 
 do i= 1, ubound (fibers,1)  
 do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
@@ -214,7 +219,11 @@ do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
 end do
 end do        
 coord= coord/real(m)  !2018/08/05  coord= center of mass 
-print *,"cen ", coord
+
+     write(*,105), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000  !2018/12/09
+105  format( A5, 3F15.6 )
+     write(301,205), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000  !2018/12/09
+205  format( A5, 3F15.6 )
 !pause
 
 end subroutine fiber_regroup_ShiftCenterToOrigion 

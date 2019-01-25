@@ -71,11 +71,11 @@ do j=1, ubound(hinges,1)
 end do
 
        write(*,100),  "@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
-100    format( A4, F12.2, 6I9 )
+100    format( A4, F12.0, 6I9 )
        write(301,101),"@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6)  !2018/11/19 add
-101    format( A4, F12.2, 6I9 )
+101    format( A4, F12.0, 6I9 )
        write(308,101),"@@@",1.d6*t, nC(1), nC(2), nC(3), nC(4), nC(5), nC(6) 
-102    format( A4, F12.2, 6I9 )
+102    format( A4, F12.0, 6I9 )
 
 !call hinges_SortOrder_curv( hinges )   !2018/10/05  關掉, 量大, 時間花太長
 

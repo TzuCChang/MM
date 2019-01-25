@@ -36,6 +36,8 @@ integer(8)                                 :: i, j, k, n, nbr_Fibers_OLD, nbr_Fi
 
 !======================================================================
 
+simParameters%start = OMP_get_wtime()                                         !2018/12/09
+
 call output_OpenFiles( simParameters )
 
 call read_data( fibers, hinges, simParameters )                               !2018/11/25 
@@ -65,22 +67,21 @@ call update_periodic_Initial( fibers, hinges, simParameters )                  !
 
 call GhostSegments_Dimension( fibers, hinges, ghost_segments, simParameters )  !2018/10/02 修正
 
-         call output_Length(             fibers, hinges, simParameters )       !2018/10/29
          call output_LengthDistribution( fibers, indexA, simParameters )       !2018/10/29
          call output_OrientationTensor(  fibers, hinges, simParameters )       !2018/10/12 增加
+         call output_Length(             fibers, hinges, simParameters )       !2018/12/09
 
 call simulation_parameter( hinges, simParameters )                             !2018/10/08    修正字串和移動位置
 !======================================================================
-
-simParameters%start = OMP_get_wtime()                                         !2018/10/29
 
 nbr_Fibers_INC= 0                                                             !2018/07/14 修正和移動位置
 nbr_Fibers_NEW= ubound(fibers,1)                                              !2018/07/14 修正和移動位置
 nbr_Fibers_OLD= nbr_Fibers_NEW                                                !2018/07/14 修正和移動位置
 
 simParameters%nStep_max= 128                                                  !2018/10/29
-simParameters%displ_max= 1.0d-4*(3.14159d0/180.d0)/10.d0                      !2018/10/29 segments length= 0.10 mm為半徑,走一個步的距離,圓周長的3,600分之一
+!simParameters%displ_max= 1.0d-4*(3.14159d0/180.d0)/10.d0                     !2018/12/09 segments length= 0.10 mm為半徑,走一個步的距離,圓周長的3,600分之一
 simParameters%nStep=     0                                                    !2018/10/29 add
+
 
 isProgramStop  = .false.                                                      !2018/10/29
 icheck_Breakage= .true.                                                       !2018/10/29
@@ -149,11 +150,12 @@ do while ( isProgramStop .eqv. .false. )
          
     end if    
 
-#ifdef TENSOR    
+if( simParameters%TensorOrBeads .eq. 1 ) then                                 !2018/12/02
+    
     call fiber_calc_tensor( fibers, hinges, simparameters )                   !2018/10/08 change
-#else    
+else    
     call fiber_calc(        fibers, hinges, simparameters )                   !2018/10/08 change
-#endif
+endif
 
     call GhostSegments_NewLocation( hinges, ghost_segments, simParameters )   !2018/10/05  修正  
 

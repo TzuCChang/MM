@@ -127,10 +127,6 @@ time      = simParameters%time
 !$OMP END DO !NOWAIT
 !$OMP DO PRIVATE (i)
 
-do i= 1, ubound(hinges,1)
-	hinges(i)%T_Excl_Vol= 0d0
-	hinges(i)%F_Excl_Vol= 0d0
-end do
 
 end subroutine GhostSegments_NewLocation 
 
@@ -186,22 +182,23 @@ box_size=      simParameters%box_size
      
      allocate( ghost_segments(nbr_GhostSegments) ) 
 
-     write(*,100),"@@@ box_size(1)=",box_size(1),maxLength,(0.1d0+0.5d0*maxLength/box_size(1)),mm1  !2018/11/22
-100  format( A17,3E15.6,I6)
-     write(*,101),"@@@ box_size(2)=",box_size(2),maxLength,(0.1d0+0.5d0*maxLength/box_size(2)),mm2  !2018/11/22
-101  format( A17,3E15.6,I6)
-     write(*,102),"@@@ box_size(3)=",box_size(3),maxLength,(0.1d0+0.5d0*maxLength/box_size(3)),mm3  !2018/11/22
-102  format( A17,3E15.6,I6)
+!2018/12/09
+     write(*,100),"@@@ box_size(1)=",box_size(1)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(1)),mm1,2*mm1+1  !2018/11/22
+100  format( A17,3F12.6,I6,I6)
+     write(*,101),"@@@ box_size(2)=",box_size(2)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(2)),mm2,2*mm2+1   !2018/11/22
+101  format( A17,3F12.6,I6,I6)
+     write(*,102),"@@@ box_size(3)=",box_size(3)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(3)),mm3,2*mm3+1   !2018/11/22
+102  format( A17,3F12.6,I6,I6)
      write(*,*),"@@@"
      write(*,*),"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
      write(*,*),"@@@"
 
-     write(301,200),"@@@ box_size(1)=",box_size(1),maxLength,(0.1d0+0.5d0*maxLength/box_size(1)),mm1  !2018/11/22
-200  format( A17,3E15.6,I6)
-     write(301,201),"@@@ box_size(2)=",box_size(2),maxLength,(0.1d0+0.5d0*maxLength/box_size(2)),mm2  !2018/11/22
-201  format( A17,3E15.6,I6)
-     write(301,202),"@@@ box_size(3)=",box_size(3),maxLength,(0.1d0+0.5d0*maxLength/box_size(3)),mm3  !2018/11/22
-202  format( A17,3E15.6,I6)
+     write(301,200),"@@@ box_size(1)=",box_size(1)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(1)),mm1,2*mm1+1   !2018/11/22
+200  format( A17,3F12.6,I6,I6)
+     write(301,201),"@@@ box_size(2)=",box_size(2)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(2)),mm2,2*mm2+1   !2018/11/22
+201  format( A17,3F12.6,I6,I6)
+     write(301,202),"@@@ box_size(3)=",box_size(3)*1000,maxLength*1000,(0.1d0+0.5d0*maxLength/box_size(3)),mm3,2*mm3+1   !2018/11/22
+202  format( A17,3F12.6,I6,I6)
      write(301,*),"@@@"
      write(301,*),"@@@ nbr_GhostSegments=",int(nbr_segments), int(numClones), nbr_GhostSegments
      write(301,*),"@@@"

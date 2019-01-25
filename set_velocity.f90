@@ -7,56 +7,17 @@ use m_OutputData                                                              !2
 implicit none
 contains
 
+subroutine set_velocity( X, vel, omega, simParameters )    !2018/12/01  change
 
-subroutine set_velocity_1848( flowcase_1848, simParameters )   !2018/10/10 add by HAKAN for dynamic paramaters
+type(simulationParameters)   :: simParameters            !2018/12/01 add
 
-implicit none
-type(simulationParameters)                 :: simParameters
-type(DynamicP), dimension(:), allocatable  :: flowcase_1848                   !2018/10/11  add
+integer(8)                   :: flow_case
+real(8), dimension (3)       :: X, vel, omega
+real(8)                      :: b, gamma_dot, epsilon_dot
 
-integer(8)                                :: h                                !2018/10/11 
-
-
-    h= simParameters%h
-
-    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
-
-    if( simParameters%time > simParameters%Controltime ) then                 !2018/10/11 增加
-        
-        simParameters%h = simParameters%h + 1                                 !2018/10/11 增加
-        
-        if( simParameters%h .GT. simParameters%nbr_Dynamic ) then             !2018/10/11 增加
-            simParameters%h = simParameters%nbr_Dynamic                       !2018/10/11 增加
-        end if                                                                !2018/10/11 增加
-        
-        h= simParameters%h                                                    !2018/10/11 增加
-        
-        call output_DynamicP_1848( flowcase_1848, simParameters )             !2018/10/11 增加
-
-    end if
-
-    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
-    simParameters%gamma_dot   = flowcase_1848(h)%Shearrate                    !2018/10/11 增加
-    simParameters%viscosity   = flowcase_1848(h)%Viscosity                    !2018/10/11  add
-    
-
-end subroutine set_velocity_1848  !2018/10/10 change name
-
-
-!2018/10/27  新增加訪問學者
-subroutine set_velocity( X,&   !2018/10/27 change
-                         vel,&
-                         omega,&
-                         gamma_dot,&
-                         epsilon_dot,&
-                         flow_case )
-
-implicit none
-real(8), dimension (3):: X
-real(8), dimension (3):: vel
-real(8), dimension (3):: omega
-real(8)               :: b, gamma_dot, epsilon_dot
-integer(8)            :: flow_case
+flow_case   = simParameters%flow_case       !2018/12/01  change
+gamma_dot   = simParameters%gamma_dot       !2018/12/01  change
+epsilon_dot = simParameters%epsilon_dot     !2018/12/01  change
 
 vel=   0
 omega= 0
@@ -70,10 +31,10 @@ end if
 
 if( flow_case==1 ) then
     
-      vel(1)=    X(2)*gamma_dot
+      vel(1)=    X(2)*gamma_dot*simParameters%coo_velocity   !2018/12/16 修正
       
-      omega(3)=  -0.5*gamma_dot !CORRECTED TS
-   
+      omega(3)=  -0.5*gamma_dot*simParameters%coo_omega      !2018/12/16 修正
+
 else if( flow_case==1848 ) then  !2018/10/27
     
       vel(1)=    X(2)*gamma_dot
@@ -162,7 +123,39 @@ end if
 		
 end subroutine set_velocity  !2018/10/27 change 
 
+!=============================================================================
 
+subroutine set_velocity_1848( flowcase_1848, simParameters )   !2018/12/01
 
+type(simulationParameters)                 :: simParameters    !2018/12/01 add
+type(DynamicP), dimension(:), allocatable  :: flowcase_1848                   !2018/10/11  add
+
+integer(8)                                 :: h                               !2018/10/11 
+
+    h= simParameters%h
+
+    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
+
+    if( simParameters%time > simParameters%Controltime ) then                 !2018/10/11 增加
+        
+        simParameters%h = simParameters%h + 1                                 !2018/10/11 增加
+        
+        if( simParameters%h .GT. simParameters%nbr_Dynamic ) then             !2018/10/11 增加
+            simParameters%h = simParameters%nbr_Dynamic                       !2018/10/11 增加
+        end if                                                                !2018/10/11 增加
+        
+        h= simParameters%h                                                    !2018/10/11 增加
+        
+        call output_DynamicP_1848( flowcase_1848, simParameters )             !2018/10/11 增加
+
+    end if
+
+    simParameters%Controltime = flowcase_1848(h)%Duration                     !2018/10/11 增加
+    simParameters%gamma_dot   = flowcase_1848(h)%Shearrate                    !2018/10/11 增加
+    simParameters%viscosity   = flowcase_1848(h)%Viscosity                    !2018/10/11  add
+    
+
+end subroutine set_velocity_1848  !2018/10/10 change name
 
 end module m_SetVelocity     !2018/10/27 change 
+!=============================================================================

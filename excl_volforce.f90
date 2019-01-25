@@ -32,6 +32,11 @@ nbr_neighbors= simParameters%nbr_neighbors
 
 threshold= 2*r_fiber
 
+do i= 1, ubound(hinges,1)                     !2018/12/06 add
+	hinges(i)%T_excl= 0d0                 !2018/12/06 add
+	hinges(i)%F_excl= 0d0                 !2018/12/06 add
+end do
+
 do i=1, ubound( fibers, 1 )
 	do j=fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
         
@@ -183,12 +188,14 @@ end if
                 Exc_Vol_Force_Partial= Exc_Vol_Force_Partial+ v_rel * abs(fric_coeff*Exc_Vol_Force_Partial) 
             end if
             
-            hinges(j)%F_Excl_Vol= hinges(j)%F_Excl_Vol + Exc_Vol_Force_Partial
-#ifdef TENSOR            
-            hinges(j)%T_Excl_Vol= hinges(j)%T_Excl_Vol + cross(-0.5*r, Exc_Vol_Force_Partial)
-#else
-            hinges(j)%T_Excl_Vol= hinges(j)%T_Excl_Vol + cross(r, Exc_Vol_Force_Partial)
-#endif
+            hinges(j  )%F_excl= hinges(j  )%F_excl + 0.5d0*Exc_Vol_Force_Partial   !2018/12/07
+            hinges(j+1)%F_excl= hinges(j+1)%F_excl + 0.5d0*Exc_Vol_Force_Partial   !2018/12/07
+            
+if( simParameters%TensorOrBeads .eq. 1 ) then       !2018/12/02
+            hinges(j)%T_excl= hinges(j)%T_excl + cross(-0.5*r, Exc_Vol_Force_Partial)
+else
+            hinges(j)%T_excl= hinges(j)%T_excl + cross(r, Exc_Vol_Force_Partial)
+endif
          end if
 
         do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
@@ -198,6 +205,7 @@ end if
             vec_to_wall= hinges(j+1)%X_i(2)-wall_position(k)
             
 if( (k .eq. 1) .and. (vec_to_wall .gt. 0) ) then  !2018/08/10 修正超過上表面牆壁 Wall
+
      vec_to_wall= -0.1*r_fiber                    !2018/08/10 
 end if
 
@@ -233,12 +241,15 @@ end if
                     Exc_Vol_Force_Partial= Exc_Vol_Force_Partial+ v_rel * abs(fric_coeff*Exc_Vol_Force_Partial) 
 	            end if
 	     
-       		    hinges(j)%F_Excl_Vol   = hinges(j)%F_Excl_Vol+ Exc_Vol_Force_Partial
-#ifdef TENSOR            
-                hinges(j)%T_Excl_Vol   = hinges(j)%T_Excl_Vol  +cross(0.5*r, Exc_Vol_Force_Partial)
-#else
-                hinges(j)%T_Excl_Vol   = hinges(j)%T_Excl_Vol  +cross(r, Exc_Vol_Force_Partial)
-#endif
+       		    hinges(j  )%F_excl= hinges(j  )%F_excl + 0.5d0*Exc_Vol_Force_Partial   !2018/12/07
+                hinges(j+1)%F_excl= hinges(j+1)%F_excl + 0.5d0*Exc_Vol_Force_Partial   !2018/12/07
+                
+if( simParameters%TensorOrBeads .eq. 1 ) then       !2018/12/02
+
+                hinges(j)%T_excl= hinges(j)%T_excl + cross(0.5*r, Exc_Vol_Force_Partial)
+else
+                hinges(j)%T_excl= hinges(j)%T_excl + cross(r, Exc_Vol_Force_Partial)
+endif
 
 	        end if  
         end do
@@ -280,36 +291,34 @@ real(8), parameter      :: pi= 3.141592653589793d0
     
     Exc_Vol_Force_Partial= -(Gab/(Gab_min))*fac*exp(-2*(Gab_min/r_fiber-2))
 
-    
-	if( hingesb1%is_stationary==1 ) hingesb1%v_i= 0
-	if( hingesa1%is_stationary==1 ) hingesa1%v_i= 0  !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有is_stationary資訊
-	
-    v_rel= -hingesb1%v_i + hingesa1%v_i - cross(hingesb1%omega,r2*t)&
-                                        + cross(hingesa1%omega,r1*s)    !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有omega資訊
-!print *,"vel",v_rel
-!pause
+   !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有is_stationary資訊
+   !error/double check 2018/08/03  因為hingesa1和hingesa2均來自segment 沒有omega資訊
 
+	if( hingesb1%is_stationary==1 ) hingesb1%v_i= 0
+	if( hingesa1%is_stationary==1 ) hingesa1%v_i= 0 
+	
+    v_rel=  ( hingesa1%v_i + cross(hingesa1%omega,r1*s) )&
+           -( hingesb1%v_i + cross(hingesb1%omega,r2*t) ) 
+                                           
     if( (v_rel(1) .eq. 0.0) .and. (v_rel(2) .eq. 0.0) .and. (v_rel(3) .eq. 0.0) ) then
-        v_rel= 0                                        !error 2018/0714 修正
-        !v_rel=v_rel/(sqrt(dot_product(v_rel,v_rel)))   !error 2018/0714 修正
+         v_rel= 0                                                          !error 2018/0714 修正
     else
-        !v_rel =0                                       !error 2018/0714 修正
-        v_rel= v_rel/(sqrt(dot_product(v_rel,v_rel)))   !error 2018/0714 修正
+         v_rel= v_rel/(sqrt(dot_product(v_rel,v_rel)))                     !error 2018/0714 修正
     end if
 
     Exc_Vol_Force_Partial= Exc_Vol_Force_Partial + v_rel*abs(fric_coeff*Exc_Vol_Force_Partial) !2018/08/04 拿掉 if 判斷
     
-    hingesb1%F_Excl_Vol= hingesb1%F_Excl_Vol + Exc_Vol_Force_Partial !2018/08/04 修正
+    hingesb1%F_excl= hingesb1%F_excl + 0.5d0*Exc_Vol_Force_Partial !2018/12/07 修正
+    hingesb2%F_excl= hingesb2%F_excl + 0.5d0*Exc_Vol_Force_Partial !2018/12/07 修正
     
-#ifdef TENSOR    
+if( simParameters%TensorOrBeads .eq. 1 ) then                              !2018/12/06  
     void= cross( (r2*t -r2/2 ), Exc_Vol_Force_Partial )
-#else
+else
     void= cross( (r2*t       ), Exc_Vol_Force_Partial )
-#endif
+end if
 
-    hingesb1%T_Excl_Vol= hingesb1%T_Excl_Vol + void                  !2018/08/04 修正
-
-    !print *, "collision happened 2"
+    hingesb1%T_excl= hingesb1%T_excl + 0.5d0*void                  !2018/12/07 修正
+    hingesb2%T_excl= hingesb2%T_excl + 0.5d0*void                  !2018/12/07 修正
       
 end subroutine excl_VolForceSegments                                         
                                                                                      

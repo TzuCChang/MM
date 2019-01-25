@@ -21,27 +21,12 @@ open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
 open(6,  file='OUTPUT/forces.out')
 
-
-print *,      "Maximum number of threads",    omp_get_max_threads()  
-print *,      "Number of threads being used", omp_get_num_threads()
-#ifdef TENSOR            
-print *,      "Hydrodynamic representation being used is TENSOR"
-#else
-print *,      "Hydrodynamic representation being used is BEAD"
-#endif
-print *,      "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
-
-write(301,*), "Maximum number of threads",    omp_get_max_threads() 
-write(301,*), "Number of threads being used", omp_get_num_threads()
-#ifdef TENSOR            
-write(301,*), "Hydrodynamic representation being used is TENSOR"
-#else
-write(301,*), "Hydrodynamic representation being used is BEAD"
-#endif
-write(301,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
-write(300,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
-write(306,*), "Time(micro sec.), a11"                                         !2018/10/27
-write(307,*), "Time(micro sec.), Ln(mm)"                                      !2018/10/27
+print *,"@@@"
+print *, "Maximum number of threads        ", omp_get_max_threads()  
+print *, "Number of threads being used     ", omp_get_num_threads()
+write(301,*), "@@@"
+write(301,*), "Maximum number of threads        ", omp_get_max_threads() 
+write(301,*), "Number of threads being used     ", omp_get_num_threads()
 
 end subroutine output_OpenFiles
 
@@ -50,8 +35,8 @@ end subroutine output_OpenFiles
 subroutine output_CloseFiles(  simParameters )  !2018/11/25
 type(simulationParameters)  :: simParameters
 
-write(*,*),   "Time Elpased(1)",  OMP_get_wtime()-simParameters%start, "s"
-write(301,*), "Time Elpased(1)",  OMP_get_wtime()-simParameters%start, "s"
+write(*,*),   "Time Elapsed(1)",  OMP_get_wtime()-simParameters%start, "s"
+write(301,*), "Time Elapsed(1)",  OMP_get_wtime()-simParameters%start, "s"
 
 close(300)
 close(301)
@@ -131,22 +116,39 @@ integer(8)                  :: mm, nn
 !      print *,i, FiberLength
        
     end do
-
+    
+    simParameters%current_time= OMP_get_wtime()-simParameters%start
+    
+      
     tt= t*1.e6 + 0.0                              !2018/08/11   化成整數,單位=micro seconds
     mm= mSegments                                 !2018/08/11   total segments number
     nn= ubound(fibers,1)                          !2018/08/11   total Fiber number
     length= 1000*FiberLength_Total                !2018/09/22   total Fiber length(mm)
     lengthAvg= 1000*FiberLength_Total/nn          !2018/09/22   mean  Fiber length(mm)
+    
+      write(*,*),"------------------------------------------------------------------------"
+      write(*,101),"###", tt, nn, simParameters%nStep_Total, simParameters%AA(1,1), lengthAvg, simParameters%current_time, "s"
+101   format( A4, F12.2, I8, 1X, I10, 2F12.6, F12.2, A2 )                  !2018/12/09
+      write(*,*),"------------------------------------------------------------------------"
+      
+      write(300,201),tt, nn, simParameters%nStep_Total, simParameters%AA(1,1), lengthAvg, simParameters%current_time, "s"
+201   format( F12.2, I8, 1X, I10, 2F12.6, F12.2, A2 )                  !2018/12/09  
+      
+      write(301,*),"------------------------------------------------------------------------"
+      write(301,301),"###", tt, nn, simParameters%nStep_Total, simParameters%AA(1,1), lengthAvg, simParameters%current_time, "s"
+301   format( A4, F12.2, I8, 1X, I10, 2F12.6, F12.2, A2 )                  !2018/12/09
+      write(301,*),"------------------------------------------------------------------------"
 
-    write(300,100), tt, nn, mm, length, lengthAvg
-100 format(F12.0,2I10,2F15.6)
+!    write(300,100), tt, nn, mm, length, lengthAvg
+!100 format(F12.0,2I10,2F15.6)
+    
 	write(307,110), tt,",", lengthAvg                   !2018/10/27   new output    
 110 format(F14.2,A1,F12.6)
     
-    write(*,200),"@@@", tt, nn, mm, length, lengthAvg
-200 format(A4,F14.2,2I10,2F15.6)
-    write(301,210),"@@@", tt, nn, mm, length, lengthAvg
-210 format(A4,F14.2,2I10,2F15.6)
+!    write(*,200),"@@@", tt, nn, mm, length, lengthAvg
+!200 format(A4,F14.2,2I10,2F15.6)
+!    write(301,210),"@@@", tt, nn, mm, length, lengthAvg
+!210 format(A4,F14.2,2I10,2F15.6)
 !pause
 
 end subroutine output_Length
@@ -242,27 +244,15 @@ AA= AA/trace_A
 
 simParameters%AA= AA                             !2018/10/12 新增
 
-!print *, "### trace ",trace_A, mm
-!print *, "###", tt, ubound (fibers,1), simParameters%nStep_Total
-
-      write(*,103),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
-103   format( A4, F14.2, I10, I10 )                  !2018/11/18  new output
-      
-      print *, AA
-
-      write(301,104),"###", tt ,ubound(fibers,1), simParameters%nStep_Total
-104   format( A4, F14.2, I10, I10 )                  !2018/11/18  new output
    
-      write(301,*), AA
-
-!      write(303,*), tt, ubound (fibers,1)
-      write(303,105),tt ,ubound(fibers,1)
-105   format( F14.2, I8 )                  !2018/11/18  new output
+!      write(*,101), tt, AA(1,1), AA(2,2), AA(3,3), AA(1,2), AA(1,3), AA(2,3)  !2018/12/09
+!101   format( F10.0, 6F10.5 )                                             !2018/12/09
       
-      write(303,*), AA
+      write(303,301),tt ,ubound(fibers,1)
+301   format( F14.2, I8 )                                                    !2018/11/18  new output
 
-      write(306,106), tt, AA(1,1)                !2018/11/18  new output
-106   format( F14.2,2X, F10.6 )                  !2018/11/18  new output
+      write(306,401), tt, AA(1,1), AA(2,2), AA(3,3), AA(1,2), AA(1,3), AA(2,3)  !2018/12/07
+401   format( F12.2, 2X, 6F12.6 )                                               !2018/12/07
 !pause
 
 end subroutine output_OrientationTensor
@@ -481,9 +471,9 @@ integer(8)                             :: i, j, k, m
 !2018/08/05  Compute center of mass for all fibers coord
 !2018/08/05  Compute center of mass for all fibers coord
 print *,"@@@"
-print *,"@@@ based on all hinges"
+print *,"@@@ based on all hinges(mm)"
 write(301,*), "@@@"
-write(301,*), "@@@ based on all hinges"
+write(301,*), "@@@ based on all hinges(mm)"
 
 m= 0
 coord= 0
@@ -495,8 +485,11 @@ end do
 end do        
 coord= coord/real(m)  !2018/08/05  coord= center of mass 
 
-print *,"cen ", coord
-write(301,*),"cen ", coord
+     write(*,100), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000
+100  format( A5, 3F15.6 )    !2018/12/09
+     
+     write(301,200), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000
+200  format( A5, 3F15.6 )    !2018/12/09
 
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
@@ -505,17 +498,21 @@ do i= 1, ubound (fibers,1)
 do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-1
    coord= hinges(j)%X_i
    min_coor(k)= min( min_coor(k), coord(k) )
-   min_coor(k)= min( min_coor(k), coord(k) )
-   max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )
 end do
 end do  
 end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
-print *,"min ", min_coor
-print *,"max ", max_coor
-write(301,*),"min ", min_coor
-write(301,*),"max ", max_coor
+!2018/12/09
+     write(*,101), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+101  format( A5, 3F15.6 )
+     write(*,102), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+102  format( A5, 3F15.6 )
+     
+     write(301,201), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+201  format( A5, 3F15.6 )
+     write(301,202), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+202  format( A5, 3F15.6 )
 
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
@@ -530,18 +527,24 @@ do i=1, ubound (fibers,1)
    end do
    coord= coord/real(m)
    min_coor(k)= min( min_coor(k), coord(k) )
-   min_coor(k)= min( min_coor(k), coord(k) )
-   max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )   
 end do
 end do    !2018/08/05 找出可以容納所有的 segments 框架的座標範圍
 
-print *,"min ", min_coor
-print *,"max ", max_coor
-write(301,*),"min ", min_coor
-write(301,*),"max ", max_coor
-write(301,*),"@@@"
-!print *,"@@@"
+!2018/12/09
+     write(*,105), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+105  format( A5, 3F15.6 )
+     write(*,106), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+106  format( A5, 3F15.6 )
+     write(*,107), "@@@ "
+107  format( A5 )
+     write(301,205), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+205  format( A5, 3F15.6 )
+     write(301,206), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+206  format( A5, 3F15.6 )
+     write(301,207), "@@@ "
+207  format( A5 )
+!pause
 
 end subroutine  output_minmax_hinges
 
@@ -556,9 +559,9 @@ integer(8)                             :: i, j, k, m
 
 !2018/08/05  Compute center of mass for all fibers coord
 print *,"@@@"
-print *,"@@@ based on all segments"
+print *,"@@@ based on all segments(mm)"
 write(301,*),"@@@"
-write(301,*),"@@@ based on all segments"
+write(301,*),"@@@ based on all segments(mm)"
 
 m= 0
 coord= 0
@@ -570,8 +573,11 @@ end do
 end do        
 coord= coord/real(m)  !2018/08/05  coord= center of mass 
 
-print *,"cen ", coord
-write(301,*),"cen ", coord
+     write(*,100), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000
+100  format( A5, 3F15.6 )
+     
+     write(301,200), "cen ", coord(1)*1000, coord(2)*1000, coord(3)*1000
+200  format( A5, 3F15.6 )
 
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
@@ -580,18 +586,23 @@ do i= 1, ubound (fibers,1)
 do j= fibers(i)%first_hinge, fibers(i)%first_hinge+fibers(i)%nbr_hinges-2
    coord= (hinges(j)%X_i+hinges(j+1)%X_i)/2d0
    min_coor(k)= min( min_coor(k), coord(k) )
-   min_coor(k)= min( min_coor(k), coord(k) )
-   max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )
 end do
 end do  
 end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
-print *,"min ", min_coor
-print *,"max ", max_coor
-write(301,*),"min ", min_coor
-write(301,*),"max ", max_coor
 
+!2018/12/09
+     write(*,101), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+101  format( A5, 3F15.6 )
+     write(*,102), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+102  format( A5, 3F15.6 )
+     
+     write(301,201), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+201  format( A5, 3F15.6 )
+     write(301,202), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+202  format( A5, 3F15.6 )
+     
 min_coor=   huge(0d0)
 max_coor=  -huge(0d0)
 do k=1,3
@@ -604,17 +615,24 @@ do i= 1, ubound (fibers,1)
    end do
    coord= coord/real(m)
    min_coor(k)= min( min_coor(k), coord(k) )
-   min_coor(k)= min( min_coor(k), coord(k) )
-   max_coor(k)= max( max_coor(k), coord(k) )
    max_coor(k)= max( max_coor(k), coord(k) )
 end do  
 end do      !2018/08/05 找出可以容納所有的hinges框架的座標範圍
 
-print *,"min ", min_coor
-print *,"max ", max_coor
-write(301,*),"min ", min_coor
-write(301,*),"max ", max_coor
-write(301,*),"@@@"
+
+!2018/12/09
+     write(*,105), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+105  format( A5, 3F15.6 )
+     write(*,106), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+106  format( A5, 3F15.6 )
+     write(*,107), "@@@ "
+107  format( A5 )
+     write(301,205), "min ", min_coor(1)*1000, min_coor(2)*1000, min_coor(3)*1000
+205  format( A5, 3F15.6 )
+     write(301,206), "max ", max_coor(1)*1000, max_coor(2)*1000, max_coor(3)*1000
+206  format( A5, 3F15.6 )
+     write(301,207), "@@@ "
+207  format( A5 )
 !pause
 
 end subroutine  output_minmax_segments
