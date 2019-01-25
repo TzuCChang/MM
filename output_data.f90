@@ -35,7 +35,7 @@ integer(8)                               :: i, j, k
             
 end subroutine output_data
 
-
+!======================================================================
 subroutine output_Length( t, fibers, hinges )  !2018/09/22  ­×¥¿
 
 type(fiber), dimension(:),  allocatable :: fibers
@@ -73,16 +73,13 @@ integer                     :: mm, nn, tt
     lengthAvg= 1000*FiberLength_Total/nn          !2018/09/22   mean  Fiber length(mm)
 
     write(300,*), tt, nn, mm, length, lengthAvg
+	write(307,*), tt,",", lengthAvg                   !2018/10/07   new output
   
     print *,      "@@@", tt, nn, mm, length, lengthAvg
     write(301,*), "@@@", tt, nn, mm, length, lengthAvg
 !   pause
 
 end subroutine output_Length
-
-
-
-
 
 
 !======================================================================
@@ -126,6 +123,7 @@ end do
 
 end subroutine output_LengthDistribution
 
+!======================================================================
 subroutine output_OrientationTensor( t, fibers, hinges, AA )  !2018/08/12 ·s¼W
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
@@ -165,10 +163,12 @@ write(301,*), AA
 
 write(303,*), tt, ubound (fibers,1)
 write(303,*), AA
+write(306,*), tt,",", AA(1,1)            !2018/10/07   new output
 !pause
 
 end subroutine output_OrientationTensor
 
+!======================================================================
 subroutine output_PositionsForTheMomemt ( fibers, hinges, nbr_hinges)   !2018/08/31
 type(fiber), dimension(:),   allocatable :: fibers
 type(rod),   dimension(:),   allocatable :: hinges
@@ -189,6 +189,7 @@ integer(8)                               :: iii, jjj, kkk, nbr_hinges
 
 end subroutine output_PositionsForTheMomemt
 
+!======================================================================
 subroutine output_FiberLengthModification( fibers, hinges )  !2018/09/22  add
 type(fiber) , dimension(:)            :: fibers
 type (rod), dimension(:)              :: hinges
@@ -231,7 +232,7 @@ end do
 
 end subroutine output_FiberLengthModification
 
-
+!======================================================================
 subroutine output_Initial_Positions_New( fibers, hinges, simParameters )   !2018/09/22
         
 implicit none
@@ -331,6 +332,7 @@ close( 305 )
 
 end subroutine output_Initial_Positions_New
 
+!======================================================================
 subroutine output_DynamicP_1848( flowcase_1848, simParameters )               !2018/10/11 
 
 implicit none

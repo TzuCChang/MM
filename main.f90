@@ -46,6 +46,8 @@ open(300,file='OUTPUT/meanLength.txt')
 open(301,file='OUTPUT/OutputMessage.txt')
 open(302,file='OUTPUT/FiberLengthDistribution.txt')   !2018/08/12
 open(303,file='OUTPUT/OrientationTensor.txt')         !2018/08/12
+open(306,file='OUTPUT/a11.txt')                     !2018/10/07
+open(307,file='OUTPUT/Ln.txt')                     !2018/10/07
 open(3,  file='OUTPUT/positions.out')
 open(5,  file='OUTPUT/vels.out')
 open(6,  file='OUTPUT/forces.out')
@@ -70,6 +72,8 @@ write(301,*), "Hydrodynamic representation being used is BEAD"
 write(301,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
 write(300,*), "Time(micro sec.), N_Fiber, N_Segment, T_Length(mm), Avg_Length(mm)"  !2018/09/22
 
+write(306,*), "Time(micro sec.), a11"                                     !2018/10/07
+write(307,*), "Time(micro sec.), Ln(mm)"                                    !2018/10/07
 
 call  read_data( fibers, hinges, simParameters )                              !2018/10/05 add by Hakan
 
